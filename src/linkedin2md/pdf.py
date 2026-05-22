@@ -1,7 +1,8 @@
 """Optional PDF generation from generated profile markdown.
 
 SOLID principles compliance:
-- Single Responsibility: Only handles Markdown to PDF conversion using optional Weasyprint backend.
+- Single Responsibility: Handles Markdown to PDF conversion using
+  an optional Weasyprint backend.
 """
 
 import logging
