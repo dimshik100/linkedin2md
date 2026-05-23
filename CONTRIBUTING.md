@@ -1,113 +1,68 @@
 # Contributing to linkedin2md
 
-Thank you for your interest in contributing to linkedin2md! This document provides guidelines and instructions for contributing.
+Thanks for your interest! Here's how to set up your dev environment and contribute.
 
 ## Development Setup
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/juanmanueldaza/linkedin2md.git
-   cd linkedin2md
-   ```
+```bash
+# Clone the repo
+git clone https://github.com/juanmanueldaza/linkedin2md.git
+cd linkedin2md
 
-2. **Create a virtual environment**
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
+# Create a virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# or: .venv\Scripts\activate  # Windows
 
-3. **Install development dependencies**
-   ```bash
-   pip install -e ".[dev]"
-   ```
+# Install with dev dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest -v
+
+# Lint and type check
+ruff check .
+ruff format --check .
+pyright
+```
+
+## Making Changes
+
+1. Create a branch: `git checkout -b my-feature`
+2. Make your changes
+3. Ensure all tests pass: `pytest -v`
+4. Ensure linting passes: `ruff check . && ruff format --check .`
+5. Ensure type checking passes: `pyright`
+6. Commit with a descriptive message (see commit conventions below)
+7. Push and open a Pull Request
+
+## Commit Conventions
+
+- Use conventional commit format: `type: description`
+- Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`
+- Reference issue numbers: `fix #2`, `closes #5`
+- Keep commits focused — one logical change per commit
 
 ## Code Style
 
-This project uses:
-- **Ruff** for linting and formatting
-- **Pyright** for type checking
-- Line length: 88 characters
-- Target: Python 3.13+
+- **Formatter**: ruff (line length 88, target Python 3.13+)
+- **Type checker**: pyright (strict mode)
+- **Linting**: ruff check with rules E, W, F, I, B, UP
+- **Type annotations**: required on all public function signatures
+- **Zero-dependency core**: only Python stdlib in the main package
 
-Run checks before submitting:
-```bash
-ruff check .
-ruff format .
-pyright
-pytest
-```
+## Testing
 
-## Architecture
+- **Framework**: pytest
+- **Test location**: `tests/` directory, files named `test_*.py`
+- **Test classes**: group related tests in `class TestXxx` with descriptive docstrings
+- **Edge cases**: test empty inputs, None, unicode, special characters
+- **Security tests**: path traversal, URL sanitization, file size limits
 
-The project follows SOLID principles:
+## Good First Issues
 
-- **Single Responsibility**: Each parser/formatter handles one section
-- **Open/Closed**: Add new parsers via `@register_parser` decorator
-- **Liskov Substitution**: All parsers implement `SectionParser` protocol
-- **Interface Segregation**: Focused protocols for each component
-- **Dependency Inversion**: Converter depends on protocols, not implementations
-
-### Adding a New Parser
-
-1. Create a file in `src/linkedin2md/parsers/`
-2. Implement the `SectionParser` protocol
-3. Use `@register_parser` decorator
-4. Create matching formatter in `src/linkedin2md/formatters/`
-
-Example:
-```python
-from linkedin2md.parsers.base import BaseParser
-from linkedin2md.registry import register_parser
-
-@register_parser
-class MyNewParser(BaseParser):
-    section_key = "my_section"
-    csv_files = ["MyData.csv"]
-    
-    def parse(self, data: dict) -> list:
-        # Parse logic here
-        return []
-```
-
-## Pull Request Process
-
-1. **Fork the repository** and create your branch from `main`
-2. **Write tests** for new functionality
-3. **Update documentation** if needed
-4. **Ensure all checks pass** (ruff, pyright, pytest)
-5. **Submit a PR** with a clear description
-
-### AI-Assisted & Agentic Contributions (Optional)
-
-This repository is equipped with **opencode** configurations and the **NERV** orchestration framework. You can use your own AI tools or NERV directly inside this repository to assist in coding and auditing:
-
-*   **Initialize NERV environment**: Make sure you have `opencode` and `uv` installed, then run your local agent commands.
-*   **Run Spec-Driven Development**: Initiate complex features or bug fixes via `/sdd-new <change_description>` to coordinate explorers, designers, planners, and code executors automatically.
-*   **Adversarial Code Audit**: Run `/judgment-day` within the opencode terminal to trigger a dual-model adversarial code review. It will check compliance against our strict standards listed in `AGENTS.md` and export a clean synthetic audit table.
-
-### PR Checklist
-
-- [ ] Code follows the project style and `AGENTS.md` guidelines
-- [ ] Tests added/updated (verify via `PYTHONPATH=src uv run pytest`)
-- [ ] Documentation updated (if applicable)
-- [ ] All CI/CD and lint checks pass
-
-## Reporting Bugs
-
-When reporting bugs, please include:
-- Python version
-- Operating system
-- Steps to reproduce
-- Expected vs actual behavior
-- Sample data (if possible, anonymized)
-
-## Feature Requests
-
-Feature requests are welcome! Please:
-- Check existing issues first
-- Describe the use case
-- Explain why it would benefit others
+Look for issues tagged [good first issue](https://github.com/juanmanueldaza/linkedin2md/labels/good%20first%20issue) — these are specifically chosen to be approachable for new contributors.
 
 ## Questions?
 
-Feel free to open an issue for questions or discussions.
+Open an issue or start a discussion at [github.com/juanmanueldaza/linkedin2md/discussions](https://github.com/juanmanueldaza/linkedin2md/discussions).

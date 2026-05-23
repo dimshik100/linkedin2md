@@ -1,25 +1,36 @@
 # AGENTS.md — Coding Standards for linkedin2md
 
-## How to Use
+## Code Style (Python)
 
-When working on this project:
+- **Formatter**: ruff (line length 88, target Python 3.13+)
+- **Type checker**: pyright (strict mode)
+- **Linting**: ruff check with rules E, W, F, I, B, UP
+- **Imports**: sorted by ruff (isort-compatible)
+- **String quotes**: prefer double quotes (`"`)
+- **Type annotations**: required on all public function signatures
 
-1. Read the **Skill Index** below
-2. Identify which skill files apply to the task at hand
-3. Load and follow the relevant skill file(s)
-4. Multiple skills can apply simultaneously
+## Testing
 
----
+- **Framework**: pytest
+- **Test location**: `tests/` directory, files named `test_*.py`
+- **All tests must pass** before merging — `pytest -v`
+- **Test classes**: group related tests in `class TestXxx` with descriptive docstrings
+- **Edge cases**: test empty inputs, None, unicode, special characters
+- **Security tests**: path traversal, URL sanitization, file size limits
 
-## Skill Index
+## Git Commits
 
-| Trigger | Skill | Path |
-|---------|-------|------|
-| `*.py` source files | Language | [`.claude/skills/code/SKILL.md`](.claude/skills/code/SKILL.md) |
-| `tests/`, `*test*.py` | Testing | [`.claude/skills/testing/SKILL.md`](.claude/skills/testing/SKILL.md) |
-| git commits, PRs | Commits | [`.claude/skills/commits/SKILL.md`](.claude/skills/commits/SKILL.md) |
+- Use conventional commit format: `type: description`
+- Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`
+- Reference issue numbers: `fix #2`, `closes #5`
+- Keep commits focused — one logical change per commit
 
----
+## Architecture
+
+- **Zero-dependency core**: only Python stdlib in the main package
+- **Dependency injection**: use factory functions (`create_converter()`)
+- **Separation**: parsers → formatter → writer, no circular imports
+- **CLI**: `cli.py` is the thin entry point, logic lives in domain modules
 
 ## Universal Rules (all files)
 
