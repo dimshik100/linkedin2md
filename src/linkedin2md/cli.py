@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from linkedin2md.converter import create_converter
+from linkedin2md.progress import show_progress
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,8 @@ def main() -> int:
     try:
         # Use factory to create converter with all dependencies
         converter = create_converter(args.source, args.output)
-        files = converter.convert(lang=args.lang)
+        with show_progress("Extracting and converting export..."):
+            files = converter.convert(lang=args.lang)
     except Exception as e:
         logger.error("%s", e)
         return 1
