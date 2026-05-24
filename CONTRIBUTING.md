@@ -2,6 +2,22 @@
 
 Thanks for your interest! Here's how to set up your dev environment and contribute.
 
+## NERV (AI Agent Infrastructure)
+
+This project uses [NERV](https://github.com/juanmanueldaza/nerv) for agent-native development — Spec-Driven Development (SDD) workflow, A2A agent hub, persistent memory, and OpenCode integration.
+
+```bash
+# Install NERV
+git clone https://github.com/juanmanueldaza/nerv.git ~/nerv
+cd ~/nerv && uv tool install .
+
+# Initialize in this project
+cd /path/to/linkedin2md
+nerv init
+```
+
+See `.opencode/agents/nerv.md` for available commands, skills, and SDD agents.
+
 ## Development Setup
 
 ```bash
