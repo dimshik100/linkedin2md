@@ -33,6 +33,7 @@ from linkedin2md.formatters.identity import (
 )
 from linkedin2md.formatters.jobs import (
     JobApplicationsFormatter,
+    JobDescriptionFormatter,
     JobPreferencesFormatter,
     SavedJobAlertsFormatter,
     SavedJobAnswersFormatter,
@@ -107,6 +108,7 @@ __all__ = [
     "MediaFormatter",
     "MessagesFormatter",
     # Jobs
+    "JobDescriptionFormatter",
     "JobApplicationsFormatter",
     "SavedJobsFormatter",
     "JobPreferencesFormatter",

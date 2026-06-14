@@ -33,6 +33,7 @@ from linkedin2md.parsers.identity import (
 )
 from linkedin2md.parsers.jobs import (
     JobApplicationsParser,
+    JobDescriptionParser,
     JobPreferencesParser,
     SavedJobAlertsParser,
     SavedJobAnswersParser,
@@ -121,6 +122,7 @@ __all__ = [
     "MediaParser",
     "MessagesParser",
     # Jobs
+    "JobDescriptionParser",
     "JobApplicationsParser",
     "SavedJobsParser",
     "JobPreferencesParser",
