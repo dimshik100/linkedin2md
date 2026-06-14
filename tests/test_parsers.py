@@ -599,6 +599,13 @@ class TestScriptParser:
         result = parser.parse(data)
         assert result == []
 
+    def test_parse_no_scripts_key(self):
+        """Test missing 'scripts' key returns []."""
+        parser = ScriptParser()
+        data = {}
+        result = parser.parse(data)
+        assert result == []
+
     def test_parse_missing_fields_handled(self):
         """Test entry without DATE or CONTENT still returns entry with defaults."""
         parser = ScriptParser()
