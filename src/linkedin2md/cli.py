@@ -57,9 +57,10 @@ def main() -> int:
         return 1
 
     # Success messages go to stdout (user-facing output)
-    print(f"Created {len(files)} files in {args.output}/")
-    for f in files:
-        print(f"  - {f.name}")
+    if not args.quiet:
+        print(f"Created {len(files)} files in {args.output}/")
+        for f in files:
+            print(f"  - {f.name}")
 
     # Step 4: Optional PDF Generation
     if args.pdf:
@@ -89,9 +90,11 @@ def main() -> int:
             return 1
 
         pdf_path = args.output / "profile.pdf"
-        print("Generating PDF Resume...")
+        if not args.quiet:
+            print("Generating PDF Resume...")
         if convert_md_to_pdf("\n\n".join(resume_md_parts), pdf_path):
-            print(f"Created PDF Resume: {pdf_path}")
+            if not args.quiet:
+                print(f"Created PDF Resume: {pdf_path}")
         else:
             logger.error("Failed to generate PDF Resume.")
             return 1
@@ -132,6 +135,12 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         "--pdf",
         action="store_true",
         help="Generate an elegant A4 PDF resume from your profile",
+    )
+    parser.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="Suppress file listing and PDF generation messages",
     )
     return parser.parse_args(argv)
 

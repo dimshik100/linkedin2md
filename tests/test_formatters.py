@@ -1,5 +1,10 @@
 """Tests for all formatter modules."""
 
+from linkedin2md.formatters.content import (
+    ArticlesFormatter,
+    MessagesFormatter,
+    ScriptFormatter,
+)
 from linkedin2md.formatters.jobs import JobDescriptionFormatter
 from linkedin2md.formatters.professional import (
     CertificationsFormatter,
@@ -365,8 +370,139 @@ class TestFormatterEdgeCases:
 
 
 # =============================================================================
-# Job Description Formatter
+# Messages Formatter
 # =============================================================================
+
+
+class TestMessagesFormatter:
+    """Tests for MessagesFormatter."""
+
+    def test_format_single_message(self):
+        """Test formatting one message entry renders header with from/to/subject."""
+        formatter = MessagesFormatter()
+        data = [
+            {
+                "date": "2023-01-15",
+                "from_name": "Alice Smith",
+                "to_name": "Bob Jones",
+                "subject": "Meeting Notes",
+                "content": "Here are the notes.",
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "# Messages" in result
+        assert "Alice Smith" in result
+        assert "Bob Jones" in result
+        assert "Meeting Notes" in result
+
+    def test_format_empty(self):
+        """Test formatting empty messages list returns ''."""
+        formatter = MessagesFormatter()
+        data = []
+        result = formatter.format(data, "en")
+        assert result == ""
+
+    def test_format_truncates_long_content(self):
+        """Test that content over 500 characters is truncated with '...'."""
+        formatter = MessagesFormatter()
+        long_content = "A" * 600
+        data = [
+            {
+                "date": "2023-01-15",
+                "from_name": "Alice",
+                "to_name": "Bob",
+                "subject": "Long Email",
+                "content": long_content,
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "..." in result
+        assert len(result.split("...")[0].split("> ")[-1]) <= 500
+
+
+# =============================================================================
+# Script Formatter
+# =============================================================================
+
+
+class TestScriptFormatter:
+    """Tests for ScriptFormatter."""
+
+    def test_format_single_script(self):
+        """Test renders '# Scripts' header, includes name/date/content."""
+        formatter = ScriptFormatter()
+        data = [
+            {
+                "name": "Test Script",
+                "date": "2023-01-15",
+                "content": "Script content here",
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "# Scripts" in result
+        assert "Test Script" in result
+        assert "2023-01-15" in result
+        assert "Script content here" in result
+
+    def test_format_empty(self):
+        """Test empty list returns ''."""
+        formatter = ScriptFormatter()
+        data = []
+        result = formatter.format(data, "en")
+        assert result == ""
+
+    def test_format_multiple_scripts(self):
+        """Test two entries renders both."""
+        formatter = ScriptFormatter()
+        data = [
+            {
+                "name": "Script 1",
+                "date": "2023-01-15",
+                "content": "First content",
+            },
+            {
+                "name": "Script 2",
+                "date": "2023-01-16",
+                "content": "Second content",
+            },
+        ]
+        result = formatter.format(data, "en")
+        assert "Script 1" in result
+        assert "Script 2" in result
+
+
+# =============================================================================
+# Articles Formatter
+# =============================================================================
+
+
+class TestArticlesFormatter:
+    """Tests for ArticlesFormatter."""
+
+    def test_format_single_article(self):
+        """Test renders '# Published Articles' header with title/date/author/summary."""
+        formatter = ArticlesFormatter()
+        data = [
+            {
+                "title": "My Article",
+                "date": "2023-01-15",
+                "author": "John Doe",
+                "summary": "A brief summary",
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "# Published Articles" in result
+        assert "My Article" in result
+        assert "2023-01-15" in result
+        assert "John Doe" in result
+        assert "A brief summary" in result
+
+    def test_format_empty(self):
+        """Test empty list returns ''."""
+        formatter = ArticlesFormatter()
+        data = []
+        result = formatter.format(data, "en")
+        assert result == ""
 
 
 class TestJobDescriptionFormatter:

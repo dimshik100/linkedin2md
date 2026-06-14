@@ -263,3 +263,70 @@ class MessagesFormatter(BaseFormatter):
             lines.append("")
 
         return "\n".join(lines)
+
+
+@register_formatter
+class ScriptFormatter(BaseFormatter):
+    """Format scripts section."""
+
+    @property
+    def section_key(self) -> str:
+        return "scripts"
+
+    def format(self, data: list, lang: str) -> str:
+        if not data:
+            return ""
+
+        lines = ["# Scripts", ""]
+
+        for script in data:
+            name = script.get("name", "")
+            date = script.get("date", "")
+            content = script.get("content", "") or ""
+
+            lines.append(f"## {name}")
+            if date:
+                lines.append(f"**Date:** {date}")
+            if content:
+                lines.append("")
+                lines.append(content)
+            lines.append("")
+            lines.append("---")
+            lines.append("")
+
+        return "\n".join(lines)
+
+
+@register_formatter
+class ArticlesFormatter(BaseFormatter):
+    """Format published articles section."""
+
+    @property
+    def section_key(self) -> str:
+        return "articles"
+
+    def format(self, data: list, lang: str) -> str:
+        if not data:
+            return ""
+
+        lines = ["# Published Articles", ""]
+
+        for article in data:
+            title = article.get("title", "")
+            date = article.get("date", "")
+            author = article.get("author", "")
+            summary = article.get("summary", "")
+
+            lines.append(f"## {title}")
+            if date:
+                lines.append(f"**Date:** {date}")
+            if author:
+                lines.append(f"**Author:** {author}")
+            if summary:
+                lines.append("")
+                lines.append(summary)
+            lines.append("")
+            lines.append("---")
+            lines.append("")
+
+        return "\n".join(lines)
