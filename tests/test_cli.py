@@ -180,3 +180,45 @@ class TestMaxFileSize:
         assert MAX_FILE_SIZE_MB > 0
         assert MAX_FILE_SIZE_MB <= 1000  # At most 1GB
         assert MAX_FILE_SIZE_MB == 500  # Current expected value
+
+
+class TestQuietFlag:
+    """Tests for the --quiet flag."""
+
+    def test_quiet_suppresses_file_listing(self, capsys, tmp_path):
+        """When --quiet is passed, stdout should not contain file listing."""
+        zip_path = tmp_path / "export.zip"
+        with zipfile.ZipFile(zip_path, "w") as zf:
+            zf.writestr(
+                "Profile.csv", "First Name,Last Name,Headline\nJohn,Doe,Engineer"
+            )
+
+        output_dir = tmp_path / "output"
+
+        with patch(
+            "sys.argv", ["linkedin2md", str(zip_path), "-o", str(output_dir), "--quiet"]
+        ):
+            result = main()
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert captured.out == ""
+
+    def test_quiet_still_creates_files(self, capsys, tmp_path):
+        """When --quiet is passed, output files should still be created."""
+        zip_path = tmp_path / "export.zip"
+        with zipfile.ZipFile(zip_path, "w") as zf:
+            zf.writestr(
+                "Profile.csv", "First Name,Last Name,Headline\nJohn,Doe,Engineer"
+            )
+
+        output_dir = tmp_path / "output"
+
+        with patch(
+            "sys.argv", ["linkedin2md", str(zip_path), "-o", str(output_dir), "--quiet"]
+        ):
+            result = main()
+
+        assert result == 0
+        assert output_dir.exists()
+        assert any(output_dir.iterdir())
