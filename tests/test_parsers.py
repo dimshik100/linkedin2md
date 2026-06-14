@@ -465,3 +465,95 @@ class TestParserEdgeCases:
         data = {"profile": [{"Headline": "Engineer & Architect | Tech Lead"}]}
         result = parser.parse(data)
         assert "|" in result.get("en") or "|" in result.get("es")
+
+from linkedin2md.parsers.content import MessagesParser
+
+
+# =============================================================================
+# Messages Parser
+# =============================================================================
+
+
+class TestMessagesParser:
+    """Tests for MessagesParser."""
+
+    def test_parse_single_message(self):
+        """Test parsing one valid message entry returns correct dict."""
+        parser = MessagesParser()
+        data = {
+            "messages": [
+                {
+                    "CONVERSATION ID": "12345",
+                    "CONVERSATION TITLE": "Project Discussion",
+                    "FROM": "Alice Smith",
+                    "SENDER PROFILE URL": "https://linkedin.com/in/alice",
+                    "TO": "Bob Jones",
+                    "RECIPIENT PROFILE URLS": "https://linkedin.com/in/bob",
+                    "DATE": "2023-01-15",
+                    "SUBJECT": "Meeting Notes",
+                    "CONTENT": "Here are the notes from our meeting.",
+                    "FOLDER": "INBOX",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0] == {
+            "conversation_id": "12345",
+            "conversation_title": "Project Discussion",
+            "from_name": "Alice Smith",
+            "from_url": "https://linkedin.com/in/alice",
+            "to_name": "Bob Jones",
+            "to_url": "https://linkedin.com/in/bob",
+            "date": "2023-01-15",
+            "subject": "Meeting Notes",
+            "content": "Here are the notes from our meeting.",
+            "folder": "INBOX",
+        }
+
+    def test_parse_empty_messages(self):
+        """Test parsing empty messages list returns []."""
+        parser = MessagesParser()
+        data = {"messages": []}
+        result = parser.parse(data)
+        assert result == []
+
+    def test_parse_missing_date_skipped(self):
+        """Test that entry with empty DATE is skipped."""
+        parser = MessagesParser()
+        data = {
+            "messages": [
+                {
+                    "DATE": "",
+                    "FROM": "Alice",
+                    "TO": "Bob",
+                    "CONTENT": "Should be skipped",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert result == []
+
+    def test_parse_multiple_messages(self):
+        """Test parsing two entries returns both."""
+        parser = MessagesParser()
+        data = {
+            "messages": [
+                {
+                    "DATE": "2023-01-15",
+                    "FROM": "Alice",
+                    "TO": "Bob",
+                    "CONTENT": "First message",
+                },
+                {
+                    "DATE": "2023-01-16",
+                    "FROM": "Charlie",
+                    "TO": "Dave",
+                    "CONTENT": "Second message",
+                },
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 2
+        assert result[0]["from_name"] == "Alice"
+        assert result[1]["from_name"] == "Charlie"

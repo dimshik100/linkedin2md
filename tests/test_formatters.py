@@ -361,3 +361,56 @@ class TestFormatterEdgeCases:
         result = formatter.format(data, "en")
 
         assert "# Test" in result
+
+from linkedin2md.formatters.content import MessagesFormatter
+
+
+# =============================================================================
+# Messages Formatter
+# =============================================================================
+
+
+class TestMessagesFormatter:
+    """Tests for MessagesFormatter."""
+
+    def test_format_single_message(self):
+        """Test formatting one message entry renders header and includes from/to/subject."""
+        formatter = MessagesFormatter()
+        data = [
+            {
+                "date": "2023-01-15",
+                "from_name": "Alice Smith",
+                "to_name": "Bob Jones",
+                "subject": "Meeting Notes",
+                "content": "Here are the notes.",
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "# Messages" in result
+        assert "Alice Smith" in result
+        assert "Bob Jones" in result
+        assert "Meeting Notes" in result
+
+    def test_format_empty(self):
+        """Test formatting empty messages list returns ''."""
+        formatter = MessagesFormatter()
+        data = []
+        result = formatter.format(data, "en")
+        assert result == ""
+
+    def test_format_truncates_long_content(self):
+        """Test that content over 500 characters is truncated with '...'."""
+        formatter = MessagesFormatter()
+        long_content = "A" * 600
+        data = [
+            {
+                "date": "2023-01-15",
+                "from_name": "Alice",
+                "to_name": "Bob",
+                "subject": "Long Email",
+                "content": long_content,
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "..." in result
+        assert len(result.split("...")[0].split("> ")[-1]) <= 500
