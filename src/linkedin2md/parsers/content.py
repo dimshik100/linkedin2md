@@ -267,3 +267,55 @@ class MessagesParser(BaseParser):
             result.append(entry)
 
         return result
+
+
+@register_parser
+class ScriptParser(BaseParser):
+    """Parse scripts."""
+
+    @property
+    def section_key(self) -> str:
+        return "scripts"
+
+    def parse(self, raw_data: dict[str, list[dict]]) -> list[dict]:
+        scripts = self._get_csv(raw_data, "scripts")
+        result = []
+
+        for s in scripts:
+            entry = {
+                "name": s.get("NAME", ""),
+                "date": s.get("DATE", "") or "",
+                "language": s.get("LANGUAGE", "") or "en",
+                "content": s.get("CONTENT", "") or None,
+            }
+            result.append(entry)
+
+        return result
+
+
+@register_parser
+class ArticlesParser(BaseParser):
+    """Parse published articles."""
+
+    @property
+    def section_key(self) -> str:
+        return "articles"
+
+    def parse(self, raw_data: dict[str, list[dict]]) -> list[dict]:
+        articles = self._get_csv(raw_data, "articles")
+        result = []
+
+        for a in articles:
+            title = a.get("TITLE", "")
+            if not title:
+                continue
+
+            entry = {
+                "title": title,
+                "date": a.get("DATE", "") or None,
+                "author": a.get("AUTHOR", "") or None,
+                "summary": a.get("SUMMARY", "") or None,
+            }
+            result.append(entry)
+
+        return result

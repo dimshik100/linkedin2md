@@ -557,3 +557,121 @@ class TestMessagesParser:
         assert len(result) == 2
         assert result[0]["from_name"] == "Alice"
         assert result[1]["from_name"] == "Charlie"
+
+from linkedin2md.parsers.content import ScriptParser, ArticlesParser
+
+
+# =============================================================================
+# Script Parser
+# =============================================================================
+
+
+class TestScriptParser:
+    """Tests for ScriptParser."""
+
+    def test_parse_single_script(self):
+        """Test one valid script entry returns correct dict with name/date/language/content fields."""
+        parser = ScriptParser()
+        data = {
+            "scripts": [
+                {
+                    "NAME": "Test Script",
+                    "DATE": "2023-01-15",
+                    "LANGUAGE": "en",
+                    "CONTENT": "Script content here",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0] == {
+            "name": "Test Script",
+            "date": "2023-01-15",
+            "language": "en",
+            "content": "Script content here",
+        }
+
+    def test_parse_empty(self):
+        """Test empty list returns []."""
+        parser = ScriptParser()
+        data = {"scripts": []}
+        result = parser.parse(data)
+        assert result == []
+
+    def test_parse_missing_fields_handled(self):
+        """Test entry without DATE or CONTENT still returns entry with defaults."""
+        parser = ScriptParser()
+        data = {"scripts": [{"NAME": "Incomplete Script"}]}
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0]["name"] == "Incomplete Script"
+        assert result[0]["date"] == ""
+        assert result[0]["language"] == "en"
+        assert result[0]["content"] is None
+
+    def test_parse_multiple_scripts(self):
+        """Test two entries returns both."""
+        parser = ScriptParser()
+        data = {
+            "scripts": [
+                {
+                    "NAME": "Script 1",
+                    "DATE": "2023-01-15",
+                    "LANGUAGE": "en",
+                    "CONTENT": "First content",
+                },
+                {
+                    "NAME": "Script 2",
+                    "DATE": "2023-01-16",
+                    "LANGUAGE": "es",
+                    "CONTENT": "Second content",
+                },
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 2
+        assert result[0]["name"] == "Script 1"
+        assert result[1]["name"] == "Script 2"
+
+
+# =============================================================================
+# Articles Parser
+# =============================================================================
+
+
+class TestArticlesParser:
+    """Tests for ArticlesParser."""
+
+    def test_parse_single_article(self):
+        """Test one valid entry returns correct dict with title/date/author/summary etc."""
+        parser = ArticlesParser()
+        data = {
+            "articles": [
+                {
+                    "TITLE": "My Article",
+                    "DATE": "2023-01-15",
+                    "AUTHOR": "John Doe",
+                    "SUMMARY": "A brief summary",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0]["title"] == "My Article"
+        assert result[0]["date"] == "2023-01-15"
+        assert result[0]["author"] == "John Doe"
+        assert result[0]["summary"] == "A brief summary"
+
+    def test_parse_empty(self):
+        """Test empty list returns []."""
+        parser = ArticlesParser()
+        data = {"articles": []}
+        result = parser.parse(data)
+        assert result == []
+
+    def test_parse_no_articles_key(self):
+        """Test missing 'articles' key returns []."""
+        parser = ArticlesParser()
+        data = {}
+        result = parser.parse(data)
+        assert result == []
