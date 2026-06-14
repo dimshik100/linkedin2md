@@ -1,5 +1,10 @@
 """Tests for all formatter modules."""
 
+from linkedin2md.formatters.content import (
+    ArticlesFormatter,
+    MessagesFormatter,
+    ScriptFormatter,
+)
 from linkedin2md.formatters.professional import (
     CertificationsFormatter,
     EducationFormatter,
@@ -362,8 +367,6 @@ class TestFormatterEdgeCases:
 
         assert "# Test" in result
 
-from linkedin2md.formatters.content import MessagesFormatter
-
 
 # =============================================================================
 # Messages Formatter
@@ -374,7 +377,7 @@ class TestMessagesFormatter:
     """Tests for MessagesFormatter."""
 
     def test_format_single_message(self):
-        """Test formatting one message entry renders header and includes from/to/subject."""
+        """Test formatting one message entry renders header with from/to/subject."""
         formatter = MessagesFormatter()
         data = [
             {
@@ -414,8 +417,6 @@ class TestMessagesFormatter:
         result = formatter.format(data, "en")
         assert "..." in result
         assert len(result.split("...")[0].split("> ")[-1]) <= 500
-
-from linkedin2md.formatters.content import ScriptFormatter, ArticlesFormatter
 
 
 # =============================================================================
@@ -478,7 +479,7 @@ class TestArticlesFormatter:
     """Tests for ArticlesFormatter."""
 
     def test_format_single_article(self):
-        """Test renders '# Published Articles' header, includes title/date/author/summary."""
+        """Test renders '# Published Articles' header with title/date/author/summary."""
         formatter = ArticlesFormatter()
         data = [
             {

@@ -1,5 +1,10 @@
 """Tests for all parser modules."""
 
+from linkedin2md.parsers.content import (
+    ArticlesParser,
+    MessagesParser,
+    ScriptParser,
+)
 from linkedin2md.parsers.professional import (
     CertificationsParser,
     EducationParser,
@@ -466,8 +471,6 @@ class TestParserEdgeCases:
         result = parser.parse(data)
         assert "|" in result.get("en") or "|" in result.get("es")
 
-from linkedin2md.parsers.content import MessagesParser
-
 
 # =============================================================================
 # Messages Parser
@@ -558,8 +561,6 @@ class TestMessagesParser:
         assert result[0]["from_name"] == "Alice"
         assert result[1]["from_name"] == "Charlie"
 
-from linkedin2md.parsers.content import ScriptParser, ArticlesParser
-
 
 # =============================================================================
 # Script Parser
@@ -570,7 +571,7 @@ class TestScriptParser:
     """Tests for ScriptParser."""
 
     def test_parse_single_script(self):
-        """Test one valid script entry returns correct dict with name/date/language/content fields."""
+        """Test one valid script entry returns dict with name/date/language/content."""
         parser = ScriptParser()
         data = {
             "scripts": [
@@ -643,7 +644,7 @@ class TestArticlesParser:
     """Tests for ArticlesParser."""
 
     def test_parse_single_article(self):
-        """Test one valid entry returns correct dict with title/date/author/summary etc."""
+        """Test one valid entry returns correct dict with title/date/author/summary."""
         parser = ArticlesParser()
         data = {
             "articles": [
