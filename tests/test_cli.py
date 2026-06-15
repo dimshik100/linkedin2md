@@ -222,3 +222,182 @@ class TestQuietFlag:
         assert result == 0
         assert output_dir.exists()
         assert any(output_dir.iterdir())
+
+
+# =============================================================================
+# PDF Flag
+# =============================================================================
+
+
+class TestPdfFlag:
+    """Tests for the --pdf flag."""
+
+    def test_pdf_flag_parsed(self) -> None:
+        """Test --pdf argument sets pdf attribute to True."""
+        args = _parse_args(["export.zip", "--pdf"])
+        assert args.pdf is True
+
+    def test_pdf_flag_absent_defaults_false(self) -> None:
+        """Test pdf attribute defaults to False without --pdf flag."""
+        args = _parse_args(["export.zip"])
+        assert args.pdf is False
+
+    def test_pdf_flag_with_output(self) -> None:
+        """Test --pdf with -o sets both arguments."""
+        args = _parse_args(["export.zip", "--pdf", "-o", "/tmp/out"])
+        assert args.pdf is True
+        assert str(args.output) == "/tmp/out"
+
+    def test_pdf_no_sections_returns_1(self, caplog, tmp_path) -> None:
+        """Test returns 1 when no profile section .md files exist."""
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        dummy_zip = tmp_path / "dummy.zip"
+        dummy_zip.write_text("not a real zip but exists")
+
+        with patch(
+            "sys.argv",
+            ["linkedin2md", str(dummy_zip), "--pdf", "-o", str(output_dir)],
+        ):
+            with patch("linkedin2md.cli.create_converter") as mock_conv:
+                mock_conv.return_value.convert = lambda **kwargs: []
+                result = main()
+
+        assert result == 1
+
+    def test_pdf_happy_path(self, capsys, tmp_path) -> None:
+        """Test successful PDF generation prints messages and returns 0."""
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        (output_dir / "profile.md").write_text("# Profile\nJohn Doe")
+        (output_dir / "experience.md").write_text("# Experience\nEngineer")
+        dummy_zip = tmp_path / "dummy.zip"
+        dummy_zip.write_text("not a real zip but exists")
+
+        with patch(
+            "sys.argv",
+            ["linkedin2md", str(dummy_zip), "--pdf", "-o", str(output_dir)],
+        ):
+            with patch("linkedin2md.cli.create_converter") as mock_conv:
+                mock_conv.return_value.convert = lambda **kwargs: []
+                with patch("linkedin2md.pdf.convert_md_to_pdf", return_value=True):
+                    result = main()
+
+        assert result == 0
+        stdout = capsys.readouterr().out
+        assert "Generating PDF Resume" in stdout
+        assert "Created PDF Resume" in stdout
+
+    def test_pdf_with_quiet_suppresses_stdout(self, capsys, tmp_path) -> None:
+        """Test --pdf --quiet produces no stdout messages."""
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        (output_dir / "profile.md").write_text("# Profile")
+        dummy_zip = tmp_path / "dummy.zip"
+        dummy_zip.write_text("not a real zip but exists")
+
+        with patch(
+            "sys.argv",
+            [
+                "linkedin2md",
+                str(dummy_zip),
+                "--pdf",
+                "--quiet",
+                "-o",
+                str(output_dir),
+            ],
+        ):
+            with patch("linkedin2md.cli.create_converter") as mock_conv:
+                mock_conv.return_value.convert = lambda **kwargs: []
+                with patch("linkedin2md.pdf.convert_md_to_pdf", return_value=True):
+                    result = main()
+
+        assert result == 0
+        assert capsys.readouterr().out == ""
+
+    def test_pdf_conversion_failure_returns_1(self, caplog, tmp_path) -> None:
+        """Test returns 1 when convert_md_to_pdf returns False."""
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        (output_dir / "profile.md").write_text("# Profile")
+        dummy_zip = tmp_path / "dummy.zip"
+        dummy_zip.write_text("not a real zip but exists")
+
+        with patch(
+            "sys.argv",
+            ["linkedin2md", str(dummy_zip), "--pdf", "-o", str(output_dir)],
+        ):
+            with patch("linkedin2md.cli.create_converter") as mock_conv:
+                mock_conv.return_value.convert = lambda **kwargs: []
+                with patch("linkedin2md.pdf.convert_md_to_pdf", return_value=False):
+                    result = main()
+
+        assert result == 1
+        assert "Failed to generate PDF" in caplog.text
+
+    def test_pdf_concatenates_sections_in_order(self, tmp_path) -> None:
+        """Test sections are joined in correct order with newlines."""
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        (output_dir / "profile.md").write_text("Profile content")
+        (output_dir / "experience.md").write_text("Experience content")
+        (output_dir / "skills.md").write_text("Skills content")
+        dummy_zip = tmp_path / "dummy.zip"
+        dummy_zip.write_text("not a real zip but exists")
+
+        with patch(
+            "sys.argv",
+            ["linkedin2md", str(dummy_zip), "--pdf", "-o", str(output_dir)],
+        ):
+            with patch("linkedin2md.cli.create_converter") as mock_conv:
+                mock_conv.return_value.convert = lambda **kwargs: []
+                with patch("linkedin2md.pdf.convert_md_to_pdf") as mock_pdf:
+                    main()
+
+        called_content = mock_pdf.call_args[0][0]
+        assert "Profile content" in called_content
+        assert "Experience content" in called_content
+        assert "Skills content" in called_content
+        assert "\n\n" in called_content
+
+    def test_pdf_skips_empty_sections(self, tmp_path) -> None:
+        """Test empty .md files are excluded from resume."""
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        (output_dir / "profile.md").write_text("Profile content")
+        (output_dir / "experience.md").write_text("   ")
+        dummy_zip = tmp_path / "dummy.zip"
+        dummy_zip.write_text("not a real zip but exists")
+
+        with patch(
+            "sys.argv",
+            ["linkedin2md", str(dummy_zip), "--pdf", "-o", str(output_dir)],
+        ):
+            with patch("linkedin2md.cli.create_converter") as mock_conv:
+                mock_conv.return_value.convert = lambda **kwargs: []
+                with patch("linkedin2md.pdf.convert_md_to_pdf") as mock_pdf:
+                    main()
+
+        called_content = mock_pdf.call_args[0][0]
+        assert "Profile content" in called_content
+        assert "Experience" not in called_content
+
+    def test_pdf_only_existing_sections_included(self, tmp_path) -> None:
+        """Test only .md files that actually exist are concatenated."""
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        (output_dir / "profile.md").write_text("Only section")
+        dummy_zip = tmp_path / "dummy.zip"
+        dummy_zip.write_text("not a real zip but exists")
+
+        with patch(
+            "sys.argv",
+            ["linkedin2md", str(dummy_zip), "--pdf", "-o", str(output_dir)],
+        ):
+            with patch("linkedin2md.cli.create_converter") as mock_conv:
+                mock_conv.return_value.convert = lambda **kwargs: []
+                with patch("linkedin2md.pdf.convert_md_to_pdf") as mock_pdf:
+                    main()
+
+        called_content = mock_pdf.call_args[0][0]
+        assert called_content == "Only section"
