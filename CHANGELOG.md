@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-14
+
+### Added
+- Job Description (JD) parser and formatter — parses job posting CSVs from LinkedIn exports (#17)
+- `--quiet` CLI flag to suppress file listing output (#6)
+- `--version` CLI flag (`linkedin2md --version`)
+- Script and Articles parser/formatter for content exports
+- Unit tests for Messages, Content, Script, Articles parsers and formatters (#2, #3)
+- Unit tests for JobDescriptionParser and JobDescriptionFormatter
+- CI matrix testing on Python 3.10, 3.11, 3.12, 3.13
+- Dependabot configuration for automated dependency updates
+- Stale issue/PR management workflow
+- First-time contributor welcome workflow
+- Pre-commit hook configuration (ruff, pyright)
+- N3RV agent MCP servers: n3rv-memory, n3rv-hub
+- Sequential-thinking MCP server for agentic workflows
+- Plugin file rename nerv → n3rv with internal reference updates
+
+### Changed
+- **BREAKING**: Minimum Python version lowered from >=3.13 to >=3.10
+- nerv → n3rv complete rename across agent config, plugins, and MCP servers
+- Moved analytics to centralized UMD on data.daza.ar
+- GitHub MCP restored to wrapper script for automatic token detection
+- opencode.json MCP config overhaul (dedup servers, sequential-thinking)
+- Author email updated to juan@daza.ar
+- CODE_OF_CONDUCT.md and SECURITY.md updated with N3RV references
+
+### Fixed
+- Removed stale nerv-memory/nerv-hub MCP server duplicates
+- JobDescriptionFormatter empty-company heading fallback (uses title or "Unknown")
+- Missing test_parse_no_scripts_key in TestScriptParser
+- Lint issues (E402, E501) in rescued test files
+- Import ordering in parsers/formatters __init__
+
 ## [0.3.1] - 2026-05-22
 
 ### Added
@@ -94,7 +128,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SOLID architecture for extensibility
 - Security features (path traversal protection, URL sanitization, file size limits)
 
-[Unreleased]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.1.3...v0.2.0
