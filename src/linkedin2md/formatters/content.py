@@ -32,7 +32,7 @@ class PostsFormatter(BaseFormatter):
 
             if post.get("url"):
                 lines.append("")
-                lines.append(f"[View Post]({post['url']})")
+                lines.append(f"[View Post]({self._sanitize_url(post['url'])})")
 
             lines.append("")
             lines.append("---")
@@ -64,7 +64,7 @@ class CommentsFormatter(BaseFormatter):
             if message:
                 lines.append(f"> {message}")
             if url:
-                lines.append(f"[View]({url})")
+                lines.append(f"[View]({self._sanitize_url(url)})")
             lines.append("")
 
         return "\n".join(lines)
@@ -90,7 +90,7 @@ class ReactionsFormatter(BaseFormatter):
             date = self._escape_table_cell(reaction.get("date", ""))
             rtype = self._escape_table_cell(reaction.get("type", ""))
             url = reaction.get("url", "") or ""
-            link = f"[View]({url})" if url else ""
+            link = f"[View]({self._sanitize_url(url)})" if self._sanitize_url(url) else ""
             lines.append(f"| {date} | {rtype} | {link} |")
 
         lines.append("")
@@ -116,7 +116,7 @@ class RepostsFormatter(BaseFormatter):
         for repost in data:
             date = self._escape_table_cell(repost.get("date", ""))
             url = repost.get("url", "") or ""
-            link = f"[View]({url})" if url else ""
+            link = f"[View]({self._sanitize_url(url)})" if self._sanitize_url(url) else ""
             lines.append(f"| {date} | {link} |")
 
         lines.append("")
@@ -143,7 +143,7 @@ class VotesFormatter(BaseFormatter):
             date = self._escape_table_cell(vote.get("date", ""))
             option = self._escape_table_cell(vote.get("option", ""))
             url = vote.get("url", "") or ""
-            link = f"[View]({url})" if url else ""
+            link = f"[View]({self._sanitize_url(url)})" if self._sanitize_url(url) else ""
             lines.append(f"| {date} | {option} | {link} |")
 
         lines.append("")
@@ -169,7 +169,7 @@ class SavedItemsFormatter(BaseFormatter):
         for item in data:
             saved_at = self._escape_table_cell(item.get("saved_at", ""))
             url = item.get("url", "") or ""
-            link = f"[View]({url})" if url else ""
+            link = f"[View]({self._sanitize_url(url)})" if self._sanitize_url(url) else ""
             lines.append(f"| {saved_at} | {link} |")
 
         lines.append("")
@@ -222,7 +222,7 @@ class MediaFormatter(BaseFormatter):
             date = self._escape_table_cell(m.get("date", ""))
             desc = self._escape_table_cell(m.get("description", ""))
             url = m.get("url", "") or ""
-            link = f"[View]({url})" if url else ""
+            link = f"[View]({self._sanitize_url(url)})" if self._sanitize_url(url) else ""
             lines.append(f"| {date} | {desc} | {link} |")
 
         lines.append("")
