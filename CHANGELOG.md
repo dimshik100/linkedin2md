@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-14
+
+### Added
+- 86 new unit tests for 8 content parser/formatter pairs (Posts, Comments, Reactions, Reposts, Votes, SavedItems, Events, Media)
+- 23 unit tests for PDF exporter (`convert_md_to_pdf`) covering ImportError paths, HTML template structure, unicode, injection blocking, exception handling
+- 10 CLI integration tests for `--pdf` flag (section ordering, quiet mode, empty sections, failure modes)
+- Test suite: **304 tests** (up from 189 in v0.4.0)
+
+### Changed
+- PDF tests use `patch.dict(sys.modules)` for module-level mocking — no weasyprint installation required
+- CLI PDF tests mock at `convert_md_to_pdf` boundary for clean isolation
+
+### Fixed
+- Template injection test: injected content correctly verified to stay in body, not head
+
 ## [0.4.0] - 2026-06-14
 
 ### Added
@@ -128,7 +143,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SOLID architecture for extensibility
 - Security features (path traversal protection, URL sanitization, file size limits)
 
-[Unreleased]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.2.0...v0.3.0
