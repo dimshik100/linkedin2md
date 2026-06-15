@@ -12,14 +12,31 @@ from linkedin2md.protocols import (
 
 
 class DefaultParserRegistry(ParserRegistry):
-    """Default implementation of parser registry."""
+    """Default implementation of parser registry.
 
-    def __init__(self):
+    Stores parser classes, instantiates on demand via instantiate_all().
+    """
+
+    def __init__(self) -> None:
+        self._parser_classes: list[type[SectionParser]] = []
         self._parsers: list[SectionParser] = []
 
+    def register_class(self, cls: type[SectionParser]) -> None:
+        """Register a parser class (not instance)."""
+        self._parser_classes.append(cls)
+
     def register(self, parser: SectionParser) -> None:
-        """Register a section parser."""
+        """Register a parser instance directly."""
         self._parsers.append(parser)
+
+    def instantiate_all(self) -> None:
+        """Instantiate all registered parser classes.
+
+        Must be called after all decorators have fired (after imports).
+        """
+        for cls in self._parser_classes:
+            self._parsers.append(cls())
+        self._parser_classes.clear()
 
     def get_all(self) -> list[SectionParser]:
         """Get all registered parsers."""
@@ -27,14 +44,32 @@ class DefaultParserRegistry(ParserRegistry):
 
 
 class DefaultFormatterRegistry(FormatterRegistry):
-    """Default implementation of formatter registry."""
+    """Default implementation of formatter registry.
 
-    def __init__(self):
+    Stores formatter classes, instantiates on demand via instantiate_all().
+    """
+
+    def __init__(self) -> None:
+        self._formatter_classes: list[type[SectionFormatter]] = []
         self._formatters: dict[str, SectionFormatter] = {}
 
+    def register_class(self, cls: type[SectionFormatter]) -> None:
+        """Register a formatter class (not instance)."""
+        self._formatter_classes.append(cls)
+
     def register(self, formatter: SectionFormatter) -> None:
-        """Register a section formatter."""
+        """Register a formatter instance directly."""
         self._formatters[formatter.section_key] = formatter
+
+    def instantiate_all(self) -> None:
+        """Instantiate all registered formatter classes.
+
+        Must be called after all decorators have fired (after imports).
+        """
+        for cls in self._formatter_classes:
+            instance = cls()
+            self._formatters[instance.section_key] = instance
+        self._formatter_classes.clear()
 
     def get(self, section_key: str) -> SectionFormatter | None:
         """Get formatter for a section key."""
@@ -64,13 +99,13 @@ def get_formatter_registry() -> FormatterRegistry:
     return _formatter_registry
 
 
-def register_parser(cls):
-    """Decorator to register a parser class."""
-    _parser_registry.register(cls())
+def register_parser(cls: type[SectionParser]) -> type[SectionParser]:
+    """Decorator to register a parser class for later instantiation."""
+    _parser_registry.register_class(cls)
     return cls
 
 
-def register_formatter(cls):
-    """Decorator to register a formatter class."""
-    _formatter_registry.register(cls())
+def register_formatter(cls: type[SectionFormatter]) -> type[SectionFormatter]:
+    """Decorator to register a formatter class for later instantiation."""
+    _formatter_registry.register_class(cls)
     return cls

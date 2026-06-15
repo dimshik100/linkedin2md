@@ -411,7 +411,7 @@ class TestMessagesFormatter:
         assert result == ""
 
     def test_format_truncates_long_content(self):
-        """Test that content over 500 characters is truncated with '...'."""
+        """Test that content over 500 characters is truncated."""
         formatter = MessagesFormatter()
         long_content = "A" * 600
         data = [
@@ -424,8 +424,9 @@ class TestMessagesFormatter:
             }
         ]
         result = formatter.format(data, "en")
-        assert "..." in result
-        assert len(result.split("...")[0].split("> ")[-1]) <= 500
+        # Content should be truncated to 500 chars
+        assert "A" * 600 not in result
+        assert "A" * 500 in result
 
 
 # =============================================================================

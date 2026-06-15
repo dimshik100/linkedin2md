@@ -234,7 +234,7 @@ class MessagesFormatter(BaseFormatter):
                 lines.append(f"**Subject:** {subject}")
             if content:
                 lines.append("")
-                truncated = content[:500] + "..." if len(content) > 500 else content
+                truncated = self._truncate_text(content, 500, "message.content")
                 lines.append(f"> {truncated}")
             lines.append("")
             lines.append("---")

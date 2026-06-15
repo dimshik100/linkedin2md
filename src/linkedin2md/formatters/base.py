@@ -3,10 +3,13 @@
 Provides common formatting functionality that section formatters can use.
 """
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
 from linkedin2md.protocols import MultilingualText, SectionFormatter
+
+logger = logging.getLogger(__name__)
 
 
 class BaseFormatter(ABC, SectionFormatter):
@@ -107,6 +110,30 @@ class BaseFormatter(ABC, SectionFormatter):
             Newline-separated horizontal rule pattern.
         """
         return "\n---\n\n"
+
+    def _truncate_text(
+        self, text: str, max_len: int = 50000, field_name: str = "text"
+    ) -> str:
+        """Truncate text to max_len, logging a warning if truncated.
+
+        Args:
+            text: The text to potentially truncate.
+            max_len: Maximum character length (default 50KB).
+            field_name: Human-readable field name for log messages.
+
+        Returns:
+            Original text if under limit, otherwise truncated with warning.
+        """
+        if len(text) <= max_len:
+            return text
+        logger.warning(
+            "Truncated %s from %d to %d chars in section '%s'",
+            field_name,
+            len(text),
+            max_len,
+            self.section_key,
+        )
+        return text[:max_len]
 
     def _sanitize_url(self, url: str | None) -> str:
         """Sanitize URL for safe Markdown link rendering.

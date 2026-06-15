@@ -120,18 +120,26 @@ def create_converter(
     This provides a convenient way to create a fully configured converter
     while still allowing dependency injection for testing.
     """
-    # Import here to trigger registration of parsers and formatters
-    from linkedin2md import (
-        formatters,  # noqa: F401
-        parsers,  # noqa: F401
+    # Import parsers and formatters to trigger decorator registration.
+    # instantiate_all() must be called after to create instances.
+    from linkedin2md import (  # noqa: F401
+        formatters,
+        parsers,
     )
     from linkedin2md.extractor import ZipDataExtractor
     from linkedin2md.registry import get_formatter_registry, get_parser_registry
     from linkedin2md.writer import MarkdownFileWriter
 
+    parser_registry = get_parser_registry()
+    formatter_registry = get_formatter_registry()
+
+    # Instantiate all classes registered via decorators
+    parser_registry.instantiate_all()
+    formatter_registry.instantiate_all()
+
     return LinkedInToMarkdownConverter(
         extractor=ZipDataExtractor(source),
-        parser_registry=get_parser_registry(),
-        formatter_registry=get_formatter_registry(),
+        parser_registry=parser_registry,
+        formatter_registry=formatter_registry,
         writer=MarkdownFileWriter(output_dir),
     )
