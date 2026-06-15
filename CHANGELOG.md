@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-15
+
+### Security
+- URL sanitization (`_sanitize_url`) now wired into all formatters that render Markdown links (Posts, Comments, Reactions, Reposts, Votes, SavedItems, Media, Certifications, Projects) — fixes dead-code security gap (#32)
+- Markdown table injection fixed: `_escape_table_cell()` applied to all 25+ table formatters with newline collapsing and pipe escaping (#40)
+- Per-CSV row limit (100k) in `ZipDataExtractor` to prevent ZIP bomb memory exhaustion (#36)
+- Content length truncation (`_truncate_text`) added to `BaseFormatter` with configurable limits and truncation warnings (#42)
+
+### Removed
+- Monolithic `parser.py` (1504 lines) and `formatter.py` (1073 lines) deleted — ~2600 lines of duplicated code eliminated (#33, #34)
+
+### Changed
+- ProfileFormatter contract fixed: receives composed profile dict, not full parsed data. Converter special-case removed (#35)
+- Registration decoupled from instantiation: decorators store classes, `instantiate_all()` creates instances explicitly. No more import-side-effect object creation (#37)
+- Empty-data guard moved into `BaseFormatter.format()` template method — 47 redundant guards removed across all formatters (#39)
+- `_section_separator()` helper added to BaseFormatter
+
+### Fixed
+- Script/Articles parsers and formatters wired into `__init__.py` and `__all__` — no longer ghost code (#38)
+- Dead code removed: `MultilingualTextFactory.merge()`, duplicate `BilingualText` aliases, dict-fallback in `_get_text()` (#41)
+- E501 lint issues from community PRs #43 and #44
+
 ## [0.5.0] - 2026-06-14
 
 ### Added
@@ -143,7 +165,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SOLID architecture for extensibility
 - Security features (path traversal protection, URL sanitization, file size limits)
 
-[Unreleased]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.3.0...v0.3.1
