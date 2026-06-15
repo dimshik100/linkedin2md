@@ -69,35 +69,33 @@ class LinkedInToMarkdownConverter:
 
     def _parse_all(self, raw_data: dict[str, list[dict]]) -> dict[str, object]:
         """Parse all sections using registered parsers."""
-        parsed = {}
+        parsed: dict[str, object] = {}
 
         for parser in self._parsers.get_all():
             try:
                 result = parser.parse(raw_data)
                 parsed[parser.section_key] = result
             except Exception as e:
-                # Log but don't fail on individual section errors
                 logger.warning("Failed to parse %s: %s", parser.section_key, e)
+
+        # Compose profile section from individual profile parsers
+        parsed["profile"] = {
+            "name": parsed.get("name", ""),
+            "title": parsed.get("title"),
+            "location": parsed.get("location", ""),
+            "email": parsed.get("email", ""),
+            "phone": parsed.get("phone", ""),
+            "summary": parsed.get("summary"),
+            "profile_meta": parsed.get("profile_meta", {}),
+        }
 
         return parsed
 
     def _format_and_write_all(self, data: dict[str, object], lang: str) -> list[Path]:
         """Format and write all sections."""
-        files = []
+        files: list[Path] = []
 
-        # Special handling for profile (needs full data)
-        profile_formatter = self._formatters.get("profile")
-        if profile_formatter:
-            content = profile_formatter.format(data, lang)
-            if content and content.strip():
-                path = self._writer.write("profile", content)
-                files.append(path)
-
-        # Format other sections
         for formatter in self._formatters.get_all():
-            if formatter.section_key == "profile":
-                continue  # Already handled
-
             section_data = data.get(formatter.section_key)
             if not section_data:
                 continue

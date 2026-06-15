@@ -7,9 +7,6 @@ import re
 
 from linkedin2md.protocols import LanguageDetector, MultilingualText
 
-# Backward compatibility alias
-BilingualText = MultilingualText
-
 
 class SpanishEnglishDetector(LanguageDetector):
     """Detect Spanish vs English text.
@@ -66,18 +63,6 @@ class MultilingualTextFactory:
 
         detected = lang or self._detector.detect(text)
         return MultilingualText(**{detected: text})
-
-    def merge(self, *texts: MultilingualText) -> MultilingualText:
-        """Merge multiple MultilingualText objects.
-
-        First non-empty value for each language wins.
-        """
-        merged: dict[str, str] = {}
-        for t in texts:
-            for lang in t.languages:
-                if lang not in merged:
-                    merged[lang] = t.get(lang)
-        return MultilingualText(**merged)
 
 
 # Backward compatibility alias

@@ -15,10 +15,7 @@ class LearningFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "learning"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# LinkedIn Learning", ""]
 
         for course in data:
@@ -39,10 +36,7 @@ class LearningReviewsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "learning_reviews"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Learning Reviews", ""]
         lines.append("| Content | Rating | Date |")
         lines.append("|---------|--------|------|")

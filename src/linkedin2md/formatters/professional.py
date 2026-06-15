@@ -15,9 +15,7 @@ class SkillsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "skills"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
+    def _format_content(self, data: list, lang: str) -> str:
         return "# Skills\n\n" + ", ".join(data) + "\n"
 
 
@@ -29,10 +27,7 @@ class ExperienceFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "experience"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Experience", ""]
 
         for exp in data:
@@ -80,10 +75,7 @@ class EducationFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "education"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Education", ""]
 
         for edu in data:
@@ -128,10 +120,7 @@ class CertificationsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "certifications"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Certifications", ""]
 
         for cert in data:
@@ -165,10 +154,7 @@ class LanguagesFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "languages"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Languages", ""]
 
         for language in data:
@@ -191,10 +177,7 @@ class ProjectsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "projects"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Projects", ""]
 
         for proj in data:

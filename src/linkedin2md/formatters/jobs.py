@@ -15,10 +15,7 @@ class JobApplicationsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "job_applications"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Job Applications", ""]
         lines.append("| Date | Company | Position | Resume |")
         lines.append("|------|---------|----------|--------|")
@@ -42,10 +39,7 @@ class SavedJobsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "saved_jobs"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Saved Jobs", ""]
         lines.append("| Date | Company | Position |")
         lines.append("|------|---------|----------|")
@@ -68,10 +62,7 @@ class JobPreferencesFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "job_preferences"
 
-    def format(self, data: dict | None, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: dict | None, lang: str) -> str:
         lines = ["# Job Seeker Preferences", ""]
 
         if data.get("locations"):
@@ -109,10 +100,7 @@ class SavedJobAnswersFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "saved_job_answers"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Saved Job Application Answers", ""]
 
         for answer in data:
@@ -133,10 +121,7 @@ class ScreeningResponsesFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "screening_responses"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Screening Question Responses", ""]
 
         for i, response in enumerate(data, 1):
@@ -156,10 +141,7 @@ class SavedJobAlertsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "saved_job_alerts"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Saved Job Alerts", ""]
 
         for alert in data:
@@ -181,10 +163,7 @@ class JobDescriptionFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "job_descriptions"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Job Descriptions", ""]
 
         for job in data:

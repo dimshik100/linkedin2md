@@ -17,6 +17,7 @@ from linkedin2md.parsers.advertising import (
 )
 from linkedin2md.parsers.base import BaseParser
 from linkedin2md.parsers.content import (
+    ArticlesParser,
     CommentsParser,
     EventsParser,
     MediaParser,
@@ -25,6 +26,7 @@ from linkedin2md.parsers.content import (
     ReactionsParser,
     RepostsParser,
     SavedItemsParser,
+    ScriptParser,
     VotesParser,
 )
 from linkedin2md.parsers.identity import (
@@ -121,6 +123,8 @@ __all__ = [
     "EventsParser",
     "MediaParser",
     "MessagesParser",
+    "ScriptParser",
+    "ArticlesParser",
     # Jobs
     "JobDescriptionParser",
     "JobApplicationsParser",

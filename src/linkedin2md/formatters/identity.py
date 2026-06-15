@@ -15,10 +15,7 @@ class VerificationsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "verifications"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Identity Verifications", ""]
 
         for v in data:
@@ -54,10 +51,7 @@ class IdentityAssetsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "identity_assets"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Uploaded Documents", ""]
 
         for asset in data:

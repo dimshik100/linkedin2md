@@ -15,10 +15,7 @@ class AdsClickedFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "ads_clicked"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Ads Clicked", ""]
         lines.append("| Date | Ad ID |")
         lines.append("|------|-------|")
@@ -40,10 +37,7 @@ class AdTargetingFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "ad_targeting"
 
-    def format(self, data: dict | None, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: dict | None, lang: str) -> str:
         lines = ["# Ad Targeting Criteria", ""]
 
         for key, value in data.items():
@@ -63,10 +57,7 @@ class LanAdsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "lan_ads"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# LinkedIn Audience Network Ads", ""]
         lines.append("| Date | Action | Ad ID | Page/App |")
         lines.append("|------|--------|-------|----------|")
@@ -90,10 +81,7 @@ class InferencesFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "inferences"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# LinkedIn's Inferences About You", ""]
         lines.append("| Category | Type | Description | Inference |")
         lines.append("|----------|------|-------------|-----------|")

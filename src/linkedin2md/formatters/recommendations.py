@@ -15,10 +15,7 @@ class RecommendationsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "recommendations"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Recommendations", ""]
 
         for rec in data:
@@ -55,10 +52,7 @@ class RecommendationsGivenFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "recommendations_given"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Recommendations Given", ""]
 
         for rec in data:
@@ -95,10 +89,7 @@ class EndorsementsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "endorsements"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Endorsements", ""]
         lines.append("| Skill | Endorsed By | Date |")
         lines.append("|-------|-------------|------|")
@@ -121,10 +112,7 @@ class EndorsementsGivenFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "endorsements_given"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Endorsements Given", ""]
         lines.append("| Skill | Endorsed | Date |")
         lines.append("|-------|----------|------|")

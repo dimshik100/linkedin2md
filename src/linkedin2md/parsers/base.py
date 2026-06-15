@@ -7,15 +7,16 @@ Dependency Inversion: Depends on LanguageDetector protocol.
 from abc import ABC, abstractmethod
 
 from linkedin2md.language import (
-    MultilingualTextFactory,
+    BilingualTextFactory,
     get_default_detector,
     get_default_factory,
 )
-from linkedin2md.protocols import LanguageDetector, MultilingualText, SectionParser
-
-# Backward compatibility alias
-BilingualText = MultilingualText
-BilingualTextFactory = MultilingualTextFactory
+from linkedin2md.protocols import (
+    BilingualText,
+    LanguageDetector,
+    MultilingualText,
+    SectionParser,
+)
 
 # Month names for date formatting
 MONTHS = [

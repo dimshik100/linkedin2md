@@ -18,8 +18,9 @@ class ZipDataExtractor(DataExtractor):
     Does NOT transform or interpret the data.
     """
 
-    def __init__(self, zip_path: Path | str):
+    def __init__(self, zip_path: Path | str, max_rows: int = 100_000):
         self.zip_path = Path(zip_path)
+        self._max_rows = max_rows
 
     def extract(self) -> dict[str, list[dict]]:
         """Extract all CSVs from ZIP into raw dict format.
@@ -28,17 +29,25 @@ class ZipDataExtractor(DataExtractor):
             ValueError: If the ZIP file is invalid or corrupted.
         """
         data: dict[str, list[dict]] = {}
+        csv_count = 0
 
         try:
             with zipfile.ZipFile(self.zip_path, "r") as zf:
                 for name in zf.namelist():
                     if name.endswith(".csv"):
+                        csv_count += 1
                         with zf.open(name) as f:
                             content = f.read().decode("utf-8")
                             content = self._skip_header_notes(content)
                             reader = csv.DictReader(io.StringIO(content))
+                            rows = list(reader)
+                            if len(rows) > self._max_rows:
+                                raise ValueError(
+                                    f"CSV has too many rows: {name} "
+                                    f"({len(rows)} rows, max {self._max_rows})"
+                                )
                             key = Path(name).stem.lower().replace(" ", "_")
-                            data[key] = list(reader)
+                            data[key] = rows
         except zipfile.BadZipFile as err:
             raise ValueError(f"Invalid or corrupted ZIP file: {self.zip_path}") from err
 

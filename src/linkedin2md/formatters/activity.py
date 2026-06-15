@@ -15,10 +15,7 @@ class SearchQueriesFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "search_queries"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Search History", ""]
         lines.append("| Time | Query |")
         lines.append("|------|-------|")
@@ -40,10 +37,7 @@ class LoginsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "logins"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Login History", ""]
         lines.append("| Date | IP Address | Type |")
         lines.append("|------|------------|------|")
@@ -66,10 +60,7 @@ class SecurityChallengesFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "security_challenges"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Security Challenges", ""]
         lines.append("| Date | IP Address | Country | Type |")
         lines.append("|------|------------|---------|------|")

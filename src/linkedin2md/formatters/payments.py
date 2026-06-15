@@ -15,10 +15,7 @@ class ReceiptsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "receipts"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Payment Receipts", ""]
         lines.append("| Date | Description | Amount | Currency |")
         lines.append("|------|-------------|--------|----------|")

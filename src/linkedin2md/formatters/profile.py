@@ -15,11 +15,8 @@ class ProfileFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "profile"
 
-    def format(self, data: dict, lang: str) -> str:
-        """Format profile data.
-
-        Note: This formatter receives the full data dict to build a complete profile.
-        """
+    def _format_content(self, data: dict, lang: str) -> str:
+        """Format profile data from composed profile section dict."""
         lines = []
 
         name = data.get("name", "")

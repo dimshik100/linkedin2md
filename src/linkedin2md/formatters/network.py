@@ -15,10 +15,7 @@ class ConnectionsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "connections"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Connections", ""]
         lines.append("| Name | Company | Position | Connected |")
         lines.append("|------|---------|----------|-----------|")
@@ -42,10 +39,7 @@ class CompaniesFollowedFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "companies_followed"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Companies Followed", ""]
         for company in data:
             name = company.get("name", "")
@@ -62,10 +56,7 @@ class MembersFollowedFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "members_followed"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Members Followed", ""]
         lines.append("| Name | Date | Status |")
         lines.append("|------|------|--------|")
@@ -88,10 +79,7 @@ class InvitationsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "invitations"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Connection Invitations", ""]
         lines.append("| From | To | Date | Direction |")
         lines.append("|------|-----|------|-----------|")
@@ -115,10 +103,7 @@ class ImportedContactsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "imported_contacts"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Imported Contacts", ""]
         lines.append("| Name | Email | Title |")
         lines.append("|------|-------|-------|")

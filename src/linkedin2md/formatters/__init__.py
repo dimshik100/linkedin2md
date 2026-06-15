@@ -17,6 +17,7 @@ from linkedin2md.formatters.advertising import (
 )
 from linkedin2md.formatters.base import BaseFormatter
 from linkedin2md.formatters.content import (
+    ArticlesFormatter,
     CommentsFormatter,
     EventsFormatter,
     MediaFormatter,
@@ -25,6 +26,7 @@ from linkedin2md.formatters.content import (
     ReactionsFormatter,
     RepostsFormatter,
     SavedItemsFormatter,
+    ScriptFormatter,
     VotesFormatter,
 )
 from linkedin2md.formatters.identity import (
@@ -107,6 +109,8 @@ __all__ = [
     "EventsFormatter",
     "MediaFormatter",
     "MessagesFormatter",
+    "ScriptFormatter",
+    "ArticlesFormatter",
     # Jobs
     "JobDescriptionFormatter",
     "JobApplicationsFormatter",

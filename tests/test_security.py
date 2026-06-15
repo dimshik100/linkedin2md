@@ -139,7 +139,7 @@ class ConcreteFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "test"
 
-    def format(self, data: object, lang: str) -> str:
+    def _format_content(self, data: object, lang: str) -> str:
         return ""
 
 

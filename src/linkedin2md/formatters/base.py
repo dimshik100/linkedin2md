@@ -8,9 +8,6 @@ from typing import Any
 
 from linkedin2md.protocols import MultilingualText, SectionFormatter
 
-# Backward compatibility alias
-BilingualText = MultilingualText
-
 
 class BaseFormatter(ABC, SectionFormatter):
     """Base class for section formatters.
@@ -25,8 +22,23 @@ class BaseFormatter(ABC, SectionFormatter):
         """The section key this formatter handles."""
         ...
 
-    @abstractmethod
     def format(self, data: Any, lang: str) -> str:
+        """Format section data to Markdown string.
+
+        Provides the empty-data guard — subclasses override
+        _format_content() instead.
+        """
+        if not data:
+            return ""
+        return self._format_content(data, lang)
+
+    @abstractmethod
+    def _format_content(self, data: Any, lang: str) -> str:
+        """Format non-empty section data. Implemented by subclasses."""
+        ...
+
+    @abstractmethod
+    def _format_content(self, data: Any, lang: str) -> str:
         """Format section data to Markdown string."""
         ...
 
@@ -87,6 +99,14 @@ class BaseFormatter(ABC, SectionFormatter):
         # Escape pipe characters — the only character with structural meaning
         # inside a Markdown table row.
         return cleaned.replace("|", "\\|")
+
+    def _section_separator(self) -> str:
+        """Return a standard section separator string.
+
+        Returns:
+            Newline-separated horizontal rule pattern.
+        """
+        return "\n---\n\n"
 
     def _sanitize_url(self, url: str | None) -> str:
         """Sanitize URL for safe Markdown link rendering.

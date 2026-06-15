@@ -15,10 +15,7 @@ class ServiceEngagementsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "service_engagements"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Service Marketplace Engagements", ""]
         lines.append("| Date | Type | Amount | Currency |")
         lines.append("|------|------|--------|----------|")
@@ -42,10 +39,7 @@ class ServiceOpportunitiesFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "service_opportunities"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Service Marketplace Opportunities", ""]
 
         for opp in data:

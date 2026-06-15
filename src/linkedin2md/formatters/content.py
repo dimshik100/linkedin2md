@@ -15,10 +15,7 @@ class PostsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "posts"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Posts", ""]
 
         for post in data:
@@ -49,10 +46,7 @@ class CommentsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "comments"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Comments", ""]
 
         for comment in data:
@@ -78,10 +72,7 @@ class ReactionsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "reactions"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Reactions", ""]
         lines.append("| Date | Type | Link |")
         lines.append("|------|------|------|")
@@ -106,10 +97,7 @@ class RepostsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "reposts"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Reposts", ""]
         lines.append("| Date | Link |")
         lines.append("|------|------|")
@@ -133,10 +121,7 @@ class VotesFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "votes"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Poll Votes", ""]
         lines.append("| Date | Option | Link |")
         lines.append("|------|--------|------|")
@@ -161,10 +146,7 @@ class SavedItemsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "saved_items"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Saved Items", ""]
         lines.append("| Saved At | Link |")
         lines.append("|----------|------|")
@@ -188,10 +170,7 @@ class EventsFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "events"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Events", ""]
         lines.append("| Name | Time | Status |")
         lines.append("|------|------|--------|")
@@ -214,10 +193,7 @@ class MediaFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "media"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Uploaded Media", ""]
         lines.append("| Date | Description | Link |")
         lines.append("|------|-------------|------|")
@@ -242,10 +218,7 @@ class MessagesFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "messages"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Messages", ""]
 
         for msg in data:
@@ -278,10 +251,7 @@ class ScriptFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "scripts"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Scripts", ""]
 
         for script in data:
@@ -310,10 +280,7 @@ class ArticlesFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "articles"
 
-    def format(self, data: list, lang: str) -> str:
-        if not data:
-            return ""
-
+    def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Published Articles", ""]
 
         for article in data:
