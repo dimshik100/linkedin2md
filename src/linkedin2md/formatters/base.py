@@ -40,11 +40,6 @@ class BaseFormatter(ABC, SectionFormatter):
         """Format non-empty section data. Implemented by subclasses."""
         ...
 
-    @abstractmethod
-    def _format_content(self, data: Any, lang: str) -> str:
-        """Format section data to Markdown string."""
-        ...
-
     # ========================================================================
     # Shared Utilities
     # ========================================================================

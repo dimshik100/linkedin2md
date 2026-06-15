@@ -1,0 +1,15 @@
+[Unit]
+Description=N3RV A2A Hub for linkedin2md
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ultravietnamita/Projects/linkedin2md
+ExecStart=/home/ultravietnamita/.local/bin/n3rv hub start
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/home/ultravietnamita/Projects/linkedin2md/.n3rv/logs/hub.log
+StandardError=append:/home/ultravietnamita/Projects/linkedin2md/.n3rv/logs/hub.log
+
+[Install]
+WantedBy=default.target

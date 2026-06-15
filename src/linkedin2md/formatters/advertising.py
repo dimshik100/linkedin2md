@@ -37,7 +37,7 @@ class AdTargetingFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "ad_targeting"
 
-    def _format_content(self, data: dict | None, lang: str) -> str:
+    def _format_content(self, data: dict, lang: str) -> str:
         lines = ["# Ad Targeting Criteria", ""]
 
         for key, value in data.items():

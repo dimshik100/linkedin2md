@@ -88,4 +88,6 @@ pyrightconfig.json
 # Output directories (for testing)
 linkedin_export/
 output/
-.n3rv/
+# N3RV agent framework (local dev only)
+.opencode/
+.githooks/

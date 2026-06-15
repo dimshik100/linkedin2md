@@ -62,7 +62,7 @@ class JobPreferencesFormatter(BaseFormatter):
     def section_key(self) -> str:
         return "job_preferences"
 
-    def _format_content(self, data: dict | None, lang: str) -> str:
+    def _format_content(self, data: dict, lang: str) -> str:
         lines = ["# Job Seeker Preferences", ""]
 
         if data.get("locations"):

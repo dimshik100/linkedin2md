@@ -1,0 +1,15 @@
+[Unit]
+Description=NERV A2A Hub for linkedin2md
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ultravietnamita/Projects/linkedin2md
+ExecStart=/home/ultravietnamita/Projects/nerv/.venv/bin/nerv hub start
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/home/ultravietnamita/Projects/linkedin2md/.nerv/logs/hub.log
+StandardError=append:/home/ultravietnamita/Projects/linkedin2md/.nerv/logs/hub.log
+
+[Install]
+WantedBy=default.target

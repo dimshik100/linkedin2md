@@ -1,5 +1,7 @@
 """Security-focused tests for linkedin2md."""
 
+# pyright: reportAttributeAccessIssue=false
+
 import tempfile
 from pathlib import Path
 

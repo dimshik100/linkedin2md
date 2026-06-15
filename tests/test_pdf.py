@@ -11,7 +11,7 @@ from linkedin2md.pdf import convert_md_to_pdf
 def _make_mock_markdown(return_html: str = "<p>test</p>"):
     """Create a mock markdown module with markdown() function."""
     mod = types.ModuleType("markdown")
-    mod.markdown = MagicMock(return_value=return_html)
+    mod.markdown = MagicMock(return_value=return_html)  # type: ignore[attr-defined]
     return mod
 
 
@@ -20,7 +20,7 @@ def _make_mock_weasyprint():
     mod = types.ModuleType("weasyprint")
     mock_html = MagicMock()
     mock_html.return_value.write_pdf = MagicMock()
-    mod.HTML = mock_html
+    mod.HTML = mock_html  # type: ignore[attr-defined]
     return mod
 
 

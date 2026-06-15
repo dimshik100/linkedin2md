@@ -196,6 +196,14 @@ class ParserRegistry(Protocol):
         """Get all registered parsers."""
         ...
 
+    def instantiate_all(self) -> None:
+        """Instantiate all registered parser classes.
+
+        Optional hook for registries that support class registration.
+        Default implementation is a no-op.
+        """
+        ...
+
 
 @runtime_checkable
 class FormatterRegistry(Protocol):
@@ -214,6 +222,14 @@ class FormatterRegistry(Protocol):
     @abstractmethod
     def get_all(self) -> list[SectionFormatter]:
         """Get all registered formatters."""
+        ...
+
+    def instantiate_all(self) -> None:
+        """Instantiate all registered formatter classes.
+
+        Optional hook for registries that support class registration.
+        Default implementation is a no-op.
+        """
         ...
 
 
