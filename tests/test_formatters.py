@@ -2,8 +2,16 @@
 
 from linkedin2md.formatters.content import (
     ArticlesFormatter,
+    CommentsFormatter,
+    EventsFormatter,
+    MediaFormatter,
     MessagesFormatter,
+    PostsFormatter,
+    ReactionsFormatter,
+    RepostsFormatter,
+    SavedItemsFormatter,
     ScriptFormatter,
+    VotesFormatter,
 )
 from linkedin2md.formatters.jobs import JobDescriptionFormatter
 from linkedin2md.formatters.professional import (
@@ -503,6 +511,289 @@ class TestArticlesFormatter:
         data = []
         result = formatter.format(data, "en")
         assert result == ""
+
+
+# =============================================================================
+# Content Formatters
+# =============================================================================
+
+
+class TestPostsFormatter:
+    """Tests for PostsFormatter."""
+
+    def test_format_single_post(self) -> None:
+        """Test formatting a post renders header, date, content, link, separator."""
+        formatter = PostsFormatter()
+        data = [
+            {
+                "date": "2023-06-15",
+                "url": "https://linkedin.com/posts/1",
+                "content": {"en": "Great post!"},
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "# Posts" in result
+        assert "## 2023-06-15" in result
+        assert "Great post!" in result
+        assert "[View Post](https://linkedin.com/posts/1)" in result
+        assert "---" in result
+
+    def test_format_empty_data(self) -> None:
+        """Test empty data returns ''."""
+        assert PostsFormatter().format([], "en") == ""
+
+    def test_format_multiple_posts(self) -> None:
+        """Test multiple posts separated by ---."""
+        formatter = PostsFormatter()
+        data = [
+            {"date": "2023-01-01", "content": {"en": "First"}},
+            {"date": "2023-06-15", "content": {"en": "Second"}},
+        ]
+        result = formatter.format(data, "en")
+        assert result.count("---") == 2
+
+    def test_format_missing_content_omitted(self) -> None:
+        """Test post without content renders date and separator only."""
+        formatter = PostsFormatter()
+        data = [{"date": "2023-06-15"}]
+        result = formatter.format(data, "en")
+        assert "## 2023-06-15" in result
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'posts'."""
+        assert PostsFormatter().section_key == "posts"
+
+
+class TestCommentsFormatter:
+    """Tests for CommentsFormatter."""
+
+    def test_format_single_comment(self) -> None:
+        """Test formatting comment with bold date, blockquote message, view link."""
+        formatter = CommentsFormatter()
+        data = [
+            {
+                "date": "2023-06-15",
+                "url": "https://example.com",
+                "message": {"en": "Great article!"},
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "# Comments" in result
+        assert "**2023-06-15**" in result
+        assert "> Great article!" in result
+        assert "[View](https://example.com)" in result
+
+    def test_format_empty_data(self) -> None:
+        """Test empty data returns ''."""
+        assert CommentsFormatter().format([], "en") == ""
+
+    def test_format_multiple_comments(self) -> None:
+        """Test multiple comments rendered in order."""
+        formatter = CommentsFormatter()
+        data = [
+            {"date": "2023-01-01", "message": {"en": "First"}},
+            {"date": "2023-06-15", "message": {"en": "Second"}},
+        ]
+        result = formatter.format(data, "en")
+        assert "**2023-01-01**" in result
+        assert "**2023-06-15**" in result
+
+    def test_format_missing_url_omitted(self) -> None:
+        """Test comment without url omits the View link."""
+        formatter = CommentsFormatter()
+        data = [{"date": "2023-06-15", "message": {"en": "Test"}}]
+        result = formatter.format(data, "en")
+        assert "[View]" not in result
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'comments'."""
+        assert CommentsFormatter().section_key == "comments"
+
+
+class TestReactionsFormatter:
+    """Tests for ReactionsFormatter."""
+
+    def test_format_single_reaction(self) -> None:
+        """Test table with Date, Type, Link columns."""
+        formatter = ReactionsFormatter()
+        data = [{"date": "2023-06-15", "type": "LIKE", "url": "https://example.com"}]
+        result = formatter.format(data, "en")
+        assert "# Reactions" in result
+        assert "| Date | Type | Link |" in result
+        assert "| 2023-06-15 | LIKE | [View](https://example.com) |" in result
+
+    def test_format_empty_data(self) -> None:
+        """Test empty data returns ''."""
+        assert ReactionsFormatter().format([], "en") == ""
+
+    def test_format_missing_fields(self) -> None:
+        """Test reaction without type/url renders empty cells."""
+        formatter = ReactionsFormatter()
+        data = [{"date": "2023-06-15"}]
+        result = formatter.format(data, "en")
+        assert "| 2023-06-15" in result
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'reactions'."""
+        assert ReactionsFormatter().section_key == "reactions"
+
+
+class TestRepostsFormatter:
+    """Tests for RepostsFormatter."""
+
+    def test_format_single_repost(self) -> None:
+        """Test table with Date, Link columns."""
+        formatter = RepostsFormatter()
+        data = [{"date": "2023-06-15", "url": "https://example.com"}]
+        result = formatter.format(data, "en")
+        assert "# Reposts" in result
+        assert "| Date | Link |" in result
+        assert "[View](https://example.com)" in result
+
+    def test_format_empty_data(self) -> None:
+        """Test empty data returns ''."""
+        assert RepostsFormatter().format([], "en") == ""
+
+    def test_format_no_url(self) -> None:
+        """Test repost without url renders empty link cell."""
+        formatter = RepostsFormatter()
+        data = [{"date": "2023-06-15"}]
+        result = formatter.format(data, "en")
+        assert "| 2023-06-15 |  |" in result
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'reposts'."""
+        assert RepostsFormatter().section_key == "reposts"
+
+
+class TestVotesFormatter:
+    """Tests for VotesFormatter."""
+
+    def test_format_single_vote(self) -> None:
+        """Test table with Date, Option, Link columns."""
+        formatter = VotesFormatter()
+        data = [{"date": "2023-06-15", "option": "Yes", "url": "https://example.com"}]
+        result = formatter.format(data, "en")
+        assert "# Poll Votes" in result
+        assert "| Date | Option | Link |" in result
+        assert "| 2023-06-15 | Yes | [View](https://example.com) |" in result
+
+    def test_format_empty_data(self) -> None:
+        """Test empty data returns ''."""
+        assert VotesFormatter().format([], "en") == ""
+
+    def test_format_pipe_in_option_escaped(self) -> None:
+        """Test option text containing pipe character is rendered safely."""
+        formatter = VotesFormatter()
+        data = [{"date": "2023-06-15", "option": "Yes | No", "url": ""}]
+        result = formatter.format(data, "en")
+        assert "Yes" in result
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'votes'."""
+        assert VotesFormatter().section_key == "votes"
+
+
+class TestSavedItemsFormatter:
+    """Tests for SavedItemsFormatter."""
+
+    def test_format_single_item(self) -> None:
+        """Test table with Saved At, Link columns."""
+        formatter = SavedItemsFormatter()
+        data = [
+            {
+                "saved_at": "2023-01-15",
+                "url": "https://example.com/article",
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "# Saved Items" in result
+        assert "| Saved At | Link |" in result
+        assert "[View](https://example.com/article)" in result
+
+    def test_format_empty_data(self) -> None:
+        """Test empty data returns ''."""
+        assert SavedItemsFormatter().format([], "en") == ""
+
+    def test_format_missing_saved_at(self) -> None:
+        """Test missing saved_at renders empty cell."""
+        formatter = SavedItemsFormatter()
+        data = [{"url": "https://example.com"}]
+        result = formatter.format(data, "en")
+        assert "|  |" in result
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'saved_items'."""
+        assert SavedItemsFormatter().section_key == "saved_items"
+
+
+class TestEventsFormatter:
+    """Tests for EventsFormatter."""
+
+    def test_format_single_event(self) -> None:
+        """Test table with Name, Time, Status columns."""
+        formatter = EventsFormatter()
+        data = [
+            {
+                "name": "Tech Conf",
+                "time": "2023-07-01",
+                "status": "ATTENDED",
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "# Events" in result
+        assert "| Name | Time | Status |" in result
+        assert "| Tech Conf | 2023-07-01 | ATTENDED |" in result
+
+    def test_format_empty_data(self) -> None:
+        """Test empty data returns ''."""
+        assert EventsFormatter().format([], "en") == ""
+
+    def test_format_missing_fields(self) -> None:
+        """Test missing time/status renders empty cells."""
+        formatter = EventsFormatter()
+        data = [{"name": "Minimal Event"}]
+        result = formatter.format(data, "en")
+        assert "| Minimal Event |  |  |" in result
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'events'."""
+        assert EventsFormatter().section_key == "events"
+
+
+class TestMediaFormatter:
+    """Tests for MediaFormatter."""
+
+    def test_format_single_media(self) -> None:
+        """Test table with Date, Description, Link columns."""
+        formatter = MediaFormatter()
+        data = [
+            {
+                "date": "2023-06-15",
+                "description": "Team photo",
+                "url": "https://example.com/img.jpg",
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "# Uploaded Media" in result
+        assert "| Date | Description | Link |" in result
+        assert "Team photo" in result
+        assert "[View](https://example.com/img.jpg)" in result
+
+    def test_format_empty_data(self) -> None:
+        """Test empty data returns ''."""
+        assert MediaFormatter().format([], "en") == ""
+
+    def test_format_missing_fields(self) -> None:
+        """Test missing date/description renders empty cells."""
+        formatter = MediaFormatter()
+        data = [{"url": "https://example.com/img.jpg"}]
+        result = formatter.format(data, "en")
+        assert "|  |  | [View]" in result
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'media'."""
+        assert MediaFormatter().section_key == "media"
 
 
 class TestJobDescriptionFormatter:

@@ -2,8 +2,16 @@
 
 from linkedin2md.parsers.content import (
     ArticlesParser,
+    CommentsParser,
+    EventsParser,
+    MediaParser,
     MessagesParser,
+    PostsParser,
+    ReactionsParser,
+    RepostsParser,
+    SavedItemsParser,
     ScriptParser,
+    VotesParser,
 )
 from linkedin2md.parsers.jobs import JobDescriptionParser
 from linkedin2md.parsers.professional import (
@@ -684,6 +692,423 @@ class TestArticlesParser:
         data = {}
         result = parser.parse(data)
         assert result == []
+
+
+# =============================================================================
+# Content Parsers
+# =============================================================================
+
+
+class TestPostsParser:
+    """Tests for PostsParser."""
+
+    def test_parse_single_post(self) -> None:
+        """Test parsing one valid post returns correct dict with all fields."""
+        parser = PostsParser()
+        data = {
+            "shares": [
+                {
+                    "Date": "2023-06-15",
+                    "ShareLink": "https://linkedin.com/posts/1",
+                    "ShareCommentary": "Great post about Python!",
+                    "SharedUrl": "https://example.com/shared",
+                    "MediaUrl": "https://media.example.com/img.jpg",
+                    "Visibility": "PUBLIC",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 1
+        entry = result[0]
+        assert entry["date"] == "2023-06-15"
+        assert entry["url"] == "https://linkedin.com/posts/1"
+        assert entry["shared_url"] == "https://example.com/shared"
+        assert entry["media_url"] == "https://media.example.com/img.jpg"
+        assert entry["visibility"] == "PUBLIC"
+
+    def test_parse_empty_date_skipped(self) -> None:
+        """Test entry with empty Date is skipped."""
+        parser = PostsParser()
+        data = {"shares": [{"Date": "", "ShareCommentary": "No date"}]}
+        result = parser.parse(data)
+        assert result == []
+
+    def test_parse_empty_shares(self) -> None:
+        """Test empty shares list returns []."""
+        parser = PostsParser()
+        assert parser.parse({"shares": []}) == []
+
+    def test_parse_missing_key(self) -> None:
+        """Test missing 'shares' key returns []."""
+        parser = PostsParser()
+        assert parser.parse({}) == []
+
+    def test_parse_optional_fields_none(self) -> None:
+        """Test missing optional fields default to None."""
+        parser = PostsParser()
+        data = {"shares": [{"Date": "2023-06-15", "ShareCommentary": ""}]}
+        result = parser.parse(data)
+        assert result[0]["url"] is None
+        assert result[0]["shared_url"] is None
+        assert result[0]["media_url"] is None
+        assert result[0]["visibility"] is None
+
+    def test_parse_multiple_posts(self) -> None:
+        """Test multiple posts returned in order."""
+        parser = PostsParser()
+        data = {
+            "shares": [
+                {"Date": "2023-01-01", "ShareCommentary": "First"},
+                {"Date": "2023-06-15", "ShareCommentary": "Second"},
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 2
+
+    def test_parse_unicode_content(self) -> None:
+        """Test unicode content creates valid BilingualText."""
+        parser = PostsParser()
+        data = {
+            "shares": [{"Date": "2023-06-15", "ShareCommentary": "🚀 日本語の投稿"}]
+        }
+        result = parser.parse(data)
+        assert result[0]["content"] is not None
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'posts'."""
+        assert PostsParser().section_key == "posts"
+
+
+class TestCommentsParser:
+    """Tests for CommentsParser."""
+
+    def test_parse_single_comment(self) -> None:
+        """Test parsing one comment returns correct dict."""
+        parser = CommentsParser()
+        data = {
+            "comments": [
+                {
+                    "Date": "2023-06-15",
+                    "Link": "https://linkedin.com/comments/1",
+                    "Message": "Interesting perspective!",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0]["date"] == "2023-06-15"
+        assert result[0]["url"] == "https://linkedin.com/comments/1"
+        assert result[0]["message"] is not None
+
+    def test_parse_empty_date_skipped(self) -> None:
+        """Test comment with empty Date is skipped."""
+        parser = CommentsParser()
+        data = {"comments": [{"Date": "", "Message": "test"}]}
+        assert parser.parse(data) == []
+
+    def test_parse_empty_comments(self) -> None:
+        """Test empty comments list returns []."""
+        assert CommentsParser().parse({"comments": []}) == []
+
+    def test_parse_missing_key(self) -> None:
+        """Test missing 'comments' key returns []."""
+        assert CommentsParser().parse({}) == []
+
+    def test_parse_optional_url_none(self) -> None:
+        """Test missing Link defaults to None."""
+        parser = CommentsParser()
+        data = {"comments": [{"Date": "2023-06-15", "Message": "test"}]}
+        result = parser.parse(data)
+        assert result[0]["url"] is None
+
+    def test_parse_multiple_comments(self) -> None:
+        """Test multiple comments returned."""
+        parser = CommentsParser()
+        data = {
+            "comments": [
+                {"Date": "2023-01-01", "Message": "First"},
+                {"Date": "2023-06-15", "Message": "Second"},
+            ]
+        }
+        assert len(parser.parse(data)) == 2
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'comments'."""
+        assert CommentsParser().section_key == "comments"
+
+
+class TestReactionsParser:
+    """Tests for ReactionsParser."""
+
+    def test_parse_single_reaction(self) -> None:
+        """Test parsing one reaction returns correct dict."""
+        parser = ReactionsParser()
+        data = {
+            "reactions": [
+                {"Date": "2023-06-15", "Type": "LIKE", "Link": "https://example.com"}
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0]["date"] == "2023-06-15"
+        assert result[0]["type"] == "LIKE"
+        assert result[0]["url"] == "https://example.com"
+
+    def test_parse_empty_date_skipped(self) -> None:
+        """Test reaction with empty Date is skipped."""
+        parser = ReactionsParser()
+        assert parser.parse({"reactions": [{"Date": "", "Type": "LIKE"}]}) == []
+
+    def test_parse_empty_reactions(self) -> None:
+        """Test empty list returns []."""
+        assert ReactionsParser().parse({"reactions": []}) == []
+
+    def test_parse_missing_key(self) -> None:
+        """Test missing 'reactions' key returns []."""
+        assert ReactionsParser().parse({}) == []
+
+    def test_parse_optional_fields_none(self) -> None:
+        """Test missing Type and Link default to None."""
+        parser = ReactionsParser()
+        data = {"reactions": [{"Date": "2023-06-15"}]}
+        result = parser.parse(data)
+        assert result[0]["type"] is None
+        assert result[0]["url"] is None
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'reactions'."""
+        assert ReactionsParser().section_key == "reactions"
+
+
+class TestRepostsParser:
+    """Tests for RepostsParser."""
+
+    def test_parse_single_repost(self) -> None:
+        """Test parsing one repost returns correct dict."""
+        parser = RepostsParser()
+        data = {
+            "instantreposts": [{"Date": "2023-06-15", "Link": "https://example.com"}]
+        }
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0]["date"] == "2023-06-15"
+        assert result[0]["url"] == "https://example.com"
+
+    def test_parse_empty_date_skipped(self) -> None:
+        """Test repost with empty Date is skipped."""
+        assert RepostsParser().parse({"instantreposts": [{"Date": ""}]}) == []
+
+    def test_parse_empty_list(self) -> None:
+        """Test empty list returns []."""
+        assert RepostsParser().parse({"instantreposts": []}) == []
+
+    def test_parse_missing_key(self) -> None:
+        """Test missing key returns []."""
+        assert RepostsParser().parse({}) == []
+
+    def test_parse_url_optional(self) -> None:
+        """Test missing Link defaults to None."""
+        parser = RepostsParser()
+        data = {"instantreposts": [{"Date": "2023-06-15"}]}
+        assert parser.parse(data)[0]["url"] is None
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'reposts'."""
+        assert RepostsParser().section_key == "reposts"
+
+
+class TestVotesParser:
+    """Tests for VotesParser."""
+
+    def test_parse_single_vote(self) -> None:
+        """Test parsing one vote returns correct dict."""
+        parser = VotesParser()
+        data = {
+            "votes": [
+                {
+                    "Date": "2023-06-15",
+                    "Link": "https://example.com",
+                    "OptionText": "Yes",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0]["date"] == "2023-06-15"
+        assert result[0]["url"] == "https://example.com"
+        assert result[0]["option"] == "Yes"
+
+    def test_parse_empty_date_skipped(self) -> None:
+        """Test vote with empty Date is skipped."""
+        parser = VotesParser()
+        assert parser.parse({"votes": [{"Date": "", "OptionText": "Yes"}]}) == []
+
+    def test_parse_empty_votes(self) -> None:
+        """Test empty list returns []."""
+        assert VotesParser().parse({"votes": []}) == []
+
+    def test_parse_missing_key(self) -> None:
+        """Test missing key returns []."""
+        assert VotesParser().parse({}) == []
+
+    def test_parse_optional_fields_none(self) -> None:
+        """Test missing option defaults to None."""
+        parser = VotesParser()
+        data = {"votes": [{"Date": "2023-06-15"}]}
+        result = parser.parse(data)
+        assert result[0]["option"] is None
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'votes'."""
+        assert VotesParser().section_key == "votes"
+
+
+class TestSavedItemsParser:
+    """Tests for SavedItemsParser."""
+
+    def test_parse_single_item(self) -> None:
+        """Test parsing one saved item returns correct dict."""
+        parser = SavedItemsParser()
+        data = {
+            "saved_items": [
+                {
+                    "savedItem": "https://linkedin.com/article/123",
+                    "CreatedTime": "2023-01-15T10:30:00Z",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0]["url"] == "https://linkedin.com/article/123"
+        assert result[0]["saved_at"] == "2023-01-15T10:30:00Z"
+
+    def test_parse_empty_url_skipped(self) -> None:
+        """Test item with empty savedItem URL is skipped."""
+        parser = SavedItemsParser()
+        data = {"saved_items": [{"savedItem": ""}]}
+        assert parser.parse(data) == []
+
+    def test_parse_empty_list(self) -> None:
+        """Test empty list returns []."""
+        assert SavedItemsParser().parse({"saved_items": []}) == []
+
+    def test_parse_missing_key(self) -> None:
+        """Test missing key returns []."""
+        assert SavedItemsParser().parse({}) == []
+
+    def test_parse_saved_at_optional(self) -> None:
+        """Test missing CreatedTime defaults to None."""
+        parser = SavedItemsParser()
+        data = {"saved_items": [{"savedItem": "https://example.com"}]}
+        assert parser.parse(data)[0]["saved_at"] is None
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'saved_items'."""
+        assert SavedItemsParser().section_key == "saved_items"
+
+
+class TestEventsParser:
+    """Tests for EventsParser."""
+
+    def test_parse_single_event(self) -> None:
+        """Test parsing one event returns correct dict."""
+        parser = EventsParser()
+        data = {
+            "events": [
+                {
+                    "Event Name": "Tech Conference 2023",
+                    "Event Time": "2023-07-01T09:00:00Z",
+                    "Status": "ATTENDED",
+                    "External Url": "https://conf.example.com",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0]["name"] == "Tech Conference 2023"
+        assert result[0]["time"] == "2023-07-01T09:00:00Z"
+        assert result[0]["status"] == "ATTENDED"
+        assert result[0]["url"] == "https://conf.example.com"
+
+    def test_parse_empty_name_skipped(self) -> None:
+        """Test event with empty Event Name is skipped."""
+        parser = EventsParser()
+        assert parser.parse({"events": [{"Event Name": ""}]}) == []
+
+    def test_parse_empty_events(self) -> None:
+        """Test empty list returns []."""
+        assert EventsParser().parse({"events": []}) == []
+
+    def test_parse_missing_key(self) -> None:
+        """Test missing key returns []."""
+        assert EventsParser().parse({}) == []
+
+    def test_parse_optional_fields_none(self) -> None:
+        """Test missing optional fields default to None."""
+        parser = EventsParser()
+        data = {"events": [{"Event Name": "Minimal Event"}]}
+        result = parser.parse(data)
+        assert result[0]["time"] is None
+        assert result[0]["status"] is None
+        assert result[0]["url"] is None
+
+    def test_parse_unicode_name(self) -> None:
+        """Test unicode event name handled correctly."""
+        parser = EventsParser()
+        data = {"events": [{"Event Name": "Conferencia 日本語"}]}
+        result = parser.parse(data)
+        assert result[0]["name"] == "Conferencia 日本語"
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'events'."""
+        assert EventsParser().section_key == "events"
+
+
+class TestMediaParser:
+    """Tests for MediaParser."""
+
+    def test_parse_single_media(self) -> None:
+        """Test parsing one media entry returns correct dict."""
+        parser = MediaParser()
+        data = {
+            "rich_media": [
+                {
+                    "Media Link": "https://media.example.com/img.jpg",
+                    "Date/Time": "2023-06-15T14:30:00Z",
+                    "Media Description": "Team photo",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0]["url"] == "https://media.example.com/img.jpg"
+        assert result[0]["date"] == "2023-06-15T14:30:00Z"
+        assert result[0]["description"] == "Team photo"
+
+    def test_parse_empty_url_skipped(self) -> None:
+        """Test media with empty Media Link is skipped."""
+        parser = MediaParser()
+        assert parser.parse({"rich_media": [{"Media Link": ""}]}) == []
+
+    def test_parse_empty_list(self) -> None:
+        """Test empty list returns []."""
+        assert MediaParser().parse({"rich_media": []}) == []
+
+    def test_parse_missing_key(self) -> None:
+        """Test missing key returns []."""
+        assert MediaParser().parse({}) == []
+
+    def test_parse_optional_fields_none(self) -> None:
+        """Test missing date/description default to None."""
+        parser = MediaParser()
+        data = {"rich_media": [{"Media Link": "https://example.com/img.jpg"}]}
+        result = parser.parse(data)
+        assert result[0]["date"] is None
+        assert result[0]["description"] is None
+
+    def test_section_key(self) -> None:
+        """Test section_key returns 'media'."""
+        assert MediaParser().section_key == "media"
 
 
 class TestJobDescriptionParser:
