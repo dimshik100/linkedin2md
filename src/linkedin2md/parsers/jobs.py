@@ -39,6 +39,8 @@ class JobApplicationsParser(BaseParser):
                 "contact_email": a.get("Contact Email", "") or None,
                 "contact_phone": a.get("Contact Phone Number", "") or None,
                 "questions_answers": a.get("Question And Answers", "") or None,
+                "status": a.get("Status", "") or None,
+                "withdraw_date": a.get("Withdraw Date", "") or None,
             }
             result.append(entry)
 

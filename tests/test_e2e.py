@@ -203,6 +203,46 @@ Likely to change jobs,Career""",
 2015-03-20,192.168.1.1""",
             )
 
+            # Causes (profile_ext)
+            zf.writestr(
+                "Causes.csv",
+                """Cause Name
+Environment
+Education""",
+            )
+
+            # Interests (profile_ext)
+            zf.writestr(
+                "Interests.csv",
+                """Interest Name
+Technology
+Open Source""",
+            )
+
+            # Courses (profile_ext)
+            zf.writestr(
+                "Courses.csv",
+                """Course Name,School
+Machine Learning,Stanford
+Data Structures,MIT""",
+            )
+
+            # Groups (network_ext)
+            zf.writestr(
+                "Groups.csv",
+                """Group Name,Group URL
+Python Developers,https://linkedin.com/groups/123
+AI Researchers,https://linkedin.com/groups/456""",
+            )
+
+            # Contact Settings (privacy)
+            zf.writestr(
+                "Contact Settings.csv",
+                """Setting,Value
+Email,on
+Phone,off""",
+            )
+
         return zip_path
 
     def test_full_conversion_english(
@@ -218,13 +258,19 @@ Likely to change jobs,Career""",
         assert output_dir.exists()
 
         # Verify multiple files created
-        assert len(files) >= 10
+        assert len(files) >= 15
 
-        # Check key files exist
+        # Check key files exist — both pre-existing and new
         file_names = [f.name for f in files]
         assert "profile.md" in file_names
         assert "skills.md" in file_names
         assert "experience.md" in file_names
+        assert "education.md" in file_names
+        assert "causes.md" in file_names
+        assert "interests.md" in file_names
+        assert "courses.md" in file_names
+        assert "groups.md" in file_names
+        assert "contact_settings.md" in file_names
 
         # Verify profile content
         profile_content = (output_dir / "profile.md").read_text()
@@ -241,6 +287,19 @@ Likely to change jobs,Career""",
         experience_content = (output_dir / "experience.md").read_text()
         assert "Tech Corp" in experience_content
         assert "microservices" in experience_content
+
+        # Verify new section content
+        causes_content = (output_dir / "causes.md").read_text()
+        assert "Causes" in causes_content
+        assert "Environment" in causes_content
+
+        groups_content = (output_dir / "groups.md").read_text()
+        assert "Groups" in groups_content
+        assert "Python Developers" in groups_content
+
+        contact_settings_content = (output_dir / "contact_settings.md").read_text()
+        assert "Contact Settings" in contact_settings_content
+        assert "Email" in contact_settings_content
 
     def test_full_conversion_spanish(
         self, sample_linkedin_export: Path, tmp_path: Path

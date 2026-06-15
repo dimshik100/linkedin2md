@@ -144,6 +144,47 @@ class BaseParser(ABC, SectionParser):
         return None
 
 
+class SimpleListParser(BaseParser):
+    """Base for trivial CSV-to-list parsers that map columns 1:1.
+
+    Subclasses define csv_key (the raw_data key) and column_map
+    (CSV column name -> output field name). The generic parse()
+    iterates rows and applies the mapping.
+    """
+
+    @property
+    @abstractmethod
+    def csv_key(self) -> str:
+        """The raw_data key this parser consumes."""
+        ...
+
+    @property
+    @abstractmethod
+    def column_map(self) -> dict[str, str]:
+        """Map of CSV column name -> output field name."""
+        ...
+
+    def parse(self, raw_data: dict[str, list[dict]]) -> list[dict]:
+        """Parse CSV rows using column_map."""
+        rows = self._get_csv(raw_data, self.csv_key)
+        result = []
+
+        for row in rows:
+            entry: dict[str, str] = {}
+            has_value = False
+
+            for csv_col, field_name in self.column_map.items():
+                value = row.get(csv_col, "")
+                entry[field_name] = value
+                if value:
+                    has_value = True
+
+            if has_value:
+                result.append(entry)
+
+        return result
+
+
 def merge_bilingual_entries(
     entries: list[dict],
     key_fields: list[str],

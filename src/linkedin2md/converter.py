@@ -7,6 +7,7 @@ Implements the Dependency Inversion Principle:
 
 import logging
 from pathlib import Path
+from typing import Any
 
 from linkedin2md.protocols import (
     DataExtractor,
@@ -16,6 +17,21 @@ from linkedin2md.protocols import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class _TrackingDict(dict):
+    """Dict subclass that records which keys are accessed via get().
+
+    Used to detect CSV files in the export that no parser consumed.
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.accessed_keys: set[str] = set()
+
+    def get(self, key: str, default: Any = None) -> Any:  # type: ignore[override]
+        self.accessed_keys.add(key)
+        return super().get(key, default)
 
 
 class LinkedInToMarkdownConverter:
@@ -61,8 +77,15 @@ class LinkedInToMarkdownConverter:
         # Step 1: Extract raw CSV data
         raw_data = self._extractor.extract()
 
-        # Step 2: Parse all sections
-        parsed_data = self._parse_all(raw_data)
+        # Step 2: Parse all sections (with key access tracking)
+        tracked = _TrackingDict(raw_data)
+        parsed_data = self._parse_all(tracked)
+
+        # Step 2b: Warn about unconsumed CSV files
+        all_keys = set(raw_data.keys())
+        unconsumed = all_keys - tracked.accessed_keys
+        for key in sorted(unconsumed):
+            logger.warning("No parser consumed CSV key: %s", key)
 
         # Step 3: Format and write all sections
         return self._format_and_write_all(parsed_data, lang)

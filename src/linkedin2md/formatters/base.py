@@ -154,3 +154,44 @@ class BaseFormatter(ABC, SectionFormatter):
 
         # Escape characters that could break Markdown link syntax
         return url.replace(")", "%29").replace("[", "%5B").replace("]", "%5D")
+
+
+class SimpleListFormatter(BaseFormatter):
+    """Base for formatters that render SimpleListParser output as markdown tables.
+
+    Subclasses define section_key, title, and headers (list of display
+    column names matching the parser output field names).
+    """
+
+    @property
+    @abstractmethod
+    def title(self) -> str:
+        """Markdown heading for the section."""
+        ...
+
+    @property
+    @abstractmethod
+    def headers(self) -> list[str]:
+        """Display column names for the markdown table."""
+        ...
+
+    @property
+    @abstractmethod
+    def fields(self) -> list[str]:
+        """Field names matching parser output dict keys."""
+        ...
+
+    def _format_content(self, data: Any, lang: str) -> str:
+        """Render data as a markdown table."""
+        lines = [f"# {self.title}", ""]
+        lines.append("| " + " | ".join(self.headers) + " |")
+        lines.append("|" + "|".join(["------"] * len(self.headers)) + "|")
+
+        for row in data:
+            cells = [
+                self._escape_table_cell(row.get(field, "")) for field in self.fields
+            ]
+            lines.append(f"| {' | '.join(cells)} |")
+
+        lines.append("")
+        return "\n".join(lines)

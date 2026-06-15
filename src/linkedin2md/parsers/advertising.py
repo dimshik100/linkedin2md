@@ -66,7 +66,7 @@ class LanAdsParser(BaseParser):
         return "lan_ads"
 
     def parse(self, raw_data: dict[str, list[dict]]) -> list[dict]:
-        ads = self._get_csv(raw_data, "lan_ads_engagement")
+        ads = self._get_csv(raw_data, "linkedin_audience_network_ad_engagement")
         result = []
 
         for ad in ads:

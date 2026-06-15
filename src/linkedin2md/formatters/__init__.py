@@ -53,7 +53,17 @@ from linkedin2md.formatters.network import (
     InvitationsFormatter,
     MembersFollowedFormatter,
 )
+from linkedin2md.formatters.network_ext import GroupsFormatter
 from linkedin2md.formatters.payments import ReceiptsFormatter
+from linkedin2md.formatters.privacy import (
+    ContactSettingsFormatter,
+    DataExportHistoryFormatter,
+    DeletionHistoryFormatter,
+    LinkedInSalaryFormatter,
+    ProfileForBusinessFormatter,
+    ProfileSummaryFormatter,
+    WhoViewedProfileFormatter,
+)
 from linkedin2md.formatters.professional import (
     CertificationsFormatter,
     EducationFormatter,
@@ -63,6 +73,17 @@ from linkedin2md.formatters.professional import (
     SkillsFormatter,
 )
 from linkedin2md.formatters.profile import ProfileFormatter
+from linkedin2md.formatters.profile_ext import (
+    CausesFormatter,
+    CoursesFormatter,
+    HonorsAwardsFormatter,
+    InterestsFormatter,
+    OrganizationsFormatter,
+    PatentsFormatter,
+    PublicationsFormatter,
+    TestScoresFormatter,
+    VolunteerExperienceFormatter,
+)
 from linkedin2md.formatters.recommendations import (
     EndorsementsFormatter,
     EndorsementsGivenFormatter,
@@ -99,6 +120,7 @@ __all__ = [
     "MembersFollowedFormatter",
     "InvitationsFormatter",
     "ImportedContactsFormatter",
+    "GroupsFormatter",
     # Content
     "PostsFormatter",
     "CommentsFormatter",
@@ -136,4 +158,22 @@ __all__ = [
     # Identity
     "VerificationsFormatter",
     "IdentityAssetsFormatter",
+    # Profile Extensions
+    "CausesFormatter",
+    "InterestsFormatter",
+    "CoursesFormatter",
+    "HonorsAwardsFormatter",
+    "TestScoresFormatter",
+    "PatentsFormatter",
+    "OrganizationsFormatter",
+    "PublicationsFormatter",
+    "VolunteerExperienceFormatter",
+    # Privacy / Account
+    "ContactSettingsFormatter",
+    "DataExportHistoryFormatter",
+    "DeletionHistoryFormatter",
+    "WhoViewedProfileFormatter",
+    "LinkedInSalaryFormatter",
+    "ProfileForBusinessFormatter",
+    "ProfileSummaryFormatter",
 ]

@@ -17,15 +17,16 @@ class JobApplicationsFormatter(BaseFormatter):
 
     def _format_content(self, data: list, lang: str) -> str:
         lines = ["# Job Applications", ""]
-        lines.append("| Date | Company | Position | Resume |")
-        lines.append("|------|---------|----------|--------|")
+        lines.append("| Date | Company | Position | Status | Resume |")
+        lines.append("|------|---------|----------|--------|--------|")
 
         for app in data:
             date = self._escape_table_cell(app.get("date", ""))
             company = self._escape_table_cell(app.get("company", ""))
             title = self._escape_table_cell(app.get("title", ""))
+            status = self._escape_table_cell(app.get("status", ""))
             resume = self._escape_table_cell(app.get("resume_used", ""))
-            lines.append(f"| {date} | {company} | {title} | {resume} |")
+            lines.append(f"| {date} | {company} | {title} | {status} | {resume} |")
 
         lines.append("")
         return "\n".join(lines)

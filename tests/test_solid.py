@@ -4,7 +4,11 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-from linkedin2md.converter import LinkedInToMarkdownConverter, create_converter
+from linkedin2md.converter import (
+    LinkedInToMarkdownConverter,
+    _TrackingDict,
+    create_converter,
+)
 from linkedin2md.extractor import DictDataExtractor, ZipDataExtractor
 from linkedin2md.language import BilingualTextFactory, SpanishEnglishDetector
 from linkedin2md.protocols import BilingualText
@@ -268,3 +272,95 @@ class TestCreateConverter:
             files = converter.convert()
             assert output_dir.exists()
             assert len(files) >= 1
+
+
+# =============================================================================
+# _TrackingDict Tests
+# =============================================================================
+
+
+class TestTrackingDict:
+    """Tests for _TrackingDict (unconsumed-key detection)."""
+
+    def test_tracks_accessed_keys(self):
+        """Test that .get() calls record keys in accessed_keys."""
+        d = _TrackingDict({"a": 1, "b": 2, "c": 3})
+        d.get("a")
+        d.get("b")
+        assert d.accessed_keys == {"a", "b"}
+
+    def test_unaccessed_keys_not_recorded(self):
+        """Test that unaccessed keys are not in accessed_keys."""
+        d = _TrackingDict({"a": 1, "b": 2})
+        d.get("a")
+        assert "b" not in d.accessed_keys
+
+    def test_get_nonexistent_key_still_tracked(self):
+        """Test that getting a missing key still records it."""
+        d = _TrackingDict({"a": 1})
+        result = d.get("missing", "default")
+        assert result == "default"
+        assert "missing" in d.accessed_keys
+
+    def test_works_with_converter(self):
+        """Integration: converter tracks which keys parsers consume."""
+        raw_data = {
+            "profile": [{"First Name": "John", "Last Name": "Doe", "Headline": "Dev"}],
+            "skills": [{"Name": "Python"}],
+        }
+        tracked = _TrackingDict(raw_data)
+
+        # Simulate what parsers do
+        _ = tracked.get("profile", [])
+        _ = tracked.get("skills", [])
+
+        unconsumed = set(raw_data.keys()) - tracked.accessed_keys
+        assert unconsumed == set()
+
+    def test_detects_unconsumed_keys(self):
+        """Test that unconsumed keys are detected."""
+        raw_data = {"a": 1, "b": 2, "c": 3}
+        tracked = _TrackingDict(raw_data)
+        _ = tracked.get("a")
+        unconsumed = set(raw_data.keys()) - tracked.accessed_keys
+        assert unconsumed == {"b", "c"}
+
+
+# =============================================================================
+# Unconsumed CSV Warning Tests
+# =============================================================================
+
+
+class TestConverterUnconsumedKeys:
+    """Integration test: converter warns about unconsumed CSV keys."""
+
+    def test_warns_on_unconsumed_keys(self, caplog):
+        """Test that CSV files without parsers trigger WARNING."""
+        import logging
+
+        caplog.set_level(logging.WARNING)
+
+        raw_data = {
+            "profile": [{"First Name": "Test", "Last Name": "User", "Headline": ""}],
+            "unknown_csv_1": [{"Col": "val"}],
+            "unknown_csv_2": [{"Col": "val"}],
+        }
+
+        import linkedin2md.formatters  # noqa: F401
+        import linkedin2md.parsers  # noqa: F401
+        from linkedin2md.registry import get_formatter_registry, get_parser_registry
+
+        extractor = DictDataExtractor(raw_data)
+        writer = InMemoryWriter()
+
+        converter = LinkedInToMarkdownConverter(
+            extractor=extractor,
+            parser_registry=get_parser_registry(),
+            formatter_registry=get_formatter_registry(),
+            writer=writer,
+        )
+        converter.convert(lang="en")
+
+        assert any("unknown_csv_1" in msg for msg in caplog.messages)
+        assert any("unknown_csv_2" in msg for msg in caplog.messages)
+        assert not any("profile" in msg for msg in caplog.messages)

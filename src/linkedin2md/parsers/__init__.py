@@ -53,7 +53,17 @@ from linkedin2md.parsers.network import (
     InvitationsParser,
     MemberFollowsParser,
 )
+from linkedin2md.parsers.network_ext import GroupsParser
 from linkedin2md.parsers.payments import ReceiptsParser
+from linkedin2md.parsers.privacy import (
+    ContactSettingsParser,
+    DataExportHistoryParser,
+    DeletionHistoryParser,
+    LinkedInSalaryParser,
+    ProfileForBusinessParser,
+    ProfileSummaryParser,
+    WhoViewedProfileParser,
+)
 from linkedin2md.parsers.professional import (
     CertificationsParser,
     EducationParser,
@@ -70,6 +80,17 @@ from linkedin2md.parsers.profile import (
     ProfileMetaParser,
     SummaryParser,
     TitleParser,
+)
+from linkedin2md.parsers.profile_ext import (
+    CausesParser,
+    CoursesParser,
+    HonorsAwardsParser,
+    InterestsParser,
+    OrganizationsParser,
+    PatentsParser,
+    PublicationsParser,
+    TestScoresParser,
+    VolunteerExperienceParser,
 )
 from linkedin2md.parsers.recommendations import (
     EndorsementsGivenParser,
@@ -113,6 +134,7 @@ __all__ = [
     "MemberFollowsParser",
     "InvitationsParser",
     "ImportedContactsParser",
+    "GroupsParser",
     # Content
     "PostsParser",
     "CommentsParser",
@@ -150,4 +172,22 @@ __all__ = [
     # Identity
     "VerificationsParser",
     "IdentityAssetsParser",
+    # Profile Extensions
+    "CausesParser",
+    "InterestsParser",
+    "CoursesParser",
+    "HonorsAwardsParser",
+    "TestScoresParser",
+    "PatentsParser",
+    "OrganizationsParser",
+    "PublicationsParser",
+    "VolunteerExperienceParser",
+    # Privacy / Account
+    "ContactSettingsParser",
+    "DataExportHistoryParser",
+    "DeletionHistoryParser",
+    "WhoViewedProfileParser",
+    "LinkedInSalaryParser",
+    "ProfileForBusinessParser",
+    "ProfileSummaryParser",
 ]

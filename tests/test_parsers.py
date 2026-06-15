@@ -1,5 +1,8 @@
 """Tests for all parser modules."""
 
+import pytest
+
+from linkedin2md.parsers.base import SimpleListParser
 from linkedin2md.parsers.content import (
     ArticlesParser,
     CommentsParser,
@@ -13,7 +16,17 @@ from linkedin2md.parsers.content import (
     ScriptParser,
     VotesParser,
 )
-from linkedin2md.parsers.jobs import JobDescriptionParser
+from linkedin2md.parsers.jobs import JobApplicationsParser, JobDescriptionParser
+from linkedin2md.parsers.network_ext import GroupsParser
+from linkedin2md.parsers.privacy import (
+    ContactSettingsParser,
+    DataExportHistoryParser,
+    DeletionHistoryParser,
+    LinkedInSalaryParser,
+    ProfileForBusinessParser,
+    ProfileSummaryParser,
+    WhoViewedProfileParser,
+)
 from linkedin2md.parsers.professional import (
     CertificationsParser,
     EducationParser,
@@ -30,6 +43,17 @@ from linkedin2md.parsers.profile import (
     ProfileMetaParser,
     SummaryParser,
     TitleParser,
+)
+from linkedin2md.parsers.profile_ext import (
+    CausesParser,
+    CoursesParser,
+    HonorsAwardsParser,
+    InterestsParser,
+    OrganizationsParser,
+    PatentsParser,
+    PublicationsParser,
+    TestScoresParser,
+    VolunteerExperienceParser,
 )
 from linkedin2md.protocols import BilingualText
 
@@ -230,6 +254,48 @@ class TestProfileMetaParser:
         assert result["twitter"] is None
         assert result["websites"] == []
 
+    # ---- Field-gap regression tests (maiden_name, public_profile_url, address) ----
+
+    def test_parse_maiden_name(self):
+        """Test parsing Maiden Name field (field-gap fix)."""
+        parser = ProfileMetaParser()
+        data = {
+            "profile": [{"Maiden Name": "Smith"}],
+            "registration": [],
+            "connections": [],
+        }
+        result = parser.parse(data)
+        assert result["maiden_name"] == "Smith"
+
+    def test_parse_maiden_name_empty(self):
+        """Test parsing empty Maiden Name returns None."""
+        parser = ProfileMetaParser()
+        data = {"profile": [{}], "registration": [], "connections": []}
+        result = parser.parse(data)
+        assert result["maiden_name"] is None
+
+    def test_parse_public_profile_url(self):
+        """Test parsing Public Profile URL field (field-gap fix)."""
+        parser = ProfileMetaParser()
+        data = {
+            "profile": [{"Public Profile URL": "https://linkedin.com/in/johndoe"}],
+            "registration": [],
+            "connections": [],
+        }
+        result = parser.parse(data)
+        assert result["public_profile_url"] == "https://linkedin.com/in/johndoe"
+
+    def test_parse_address(self):
+        """Test parsing Address field (field-gap fix)."""
+        parser = ProfileMetaParser()
+        data = {
+            "profile": [{"Address": "123 Main St"}],
+            "registration": [],
+            "connections": [],
+        }
+        result = parser.parse(data)
+        assert result["address"] == "123 Main St"
+
 
 # =============================================================================
 # Professional Parsers
@@ -338,6 +404,59 @@ class TestEducationParser:
         assert result[0]["institution"] == "MIT"
         assert result[0]["start"] == "2010"
         assert result[0]["end"] == "2014"
+
+    # ---- Field-gap regression tests (field, grade) ----
+
+    def test_parse_education_field(self):
+        """Test parsing Field of Study (field-gap fix)."""
+        parser = EducationParser()
+        data = {
+            "education": [
+                {
+                    "School Name": "MIT",
+                    "Degree Name": "B.S. Computer Science",
+                    "Field of Study": "Computer Engineering",
+                    "Start Date": "2010-09-01",
+                    "End Date": "2014-06-01",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert result[0]["field"] == "Computer Engineering"
+
+    def test_parse_education_grade(self):
+        """Test parsing Grade (field-gap fix)."""
+        parser = EducationParser()
+        data = {
+            "education": [
+                {
+                    "School Name": "MIT",
+                    "Degree Name": "B.S.",
+                    "Grade": "3.8 GPA",
+                    "Start Date": "2010-09-01",
+                    "End Date": "2014-06-01",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert result[0]["grade"] == "3.8 GPA"
+
+    def test_parse_education_field_and_grade_empty(self):
+        """Test empty field/grade return None."""
+        parser = EducationParser()
+        data = {
+            "education": [
+                {
+                    "School Name": "MIT",
+                    "Degree Name": "B.S.",
+                    "Start Date": "2010-09-01",
+                    "End Date": "2014-06-01",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert result[0]["field"] is None
+        assert result[0]["grade"] is None
 
 
 class TestCertificationsParser:
@@ -1223,3 +1342,424 @@ class TestJobDescriptionParser:
         """Test section_key returns correct value."""
         parser = JobDescriptionParser()
         assert parser.section_key == "job_descriptions"
+
+
+# =============================================================================
+# Job Applications Parser (field-gap tests)
+# =============================================================================
+
+
+class TestJobApplicationsParser:
+    """Tests for JobApplicationsParser."""
+
+    def test_parse_with_status(self):
+        """Test parsing status field (field-gap fix)."""
+        parser = JobApplicationsParser()
+        data = {
+            "job_applications": [
+                {
+                    "Company Name": "Acme",
+                    "Job Title": "Engineer",
+                    "Application Date": "2024-01-01",
+                    "Status": "Applied",
+                    "Withdraw Date": "",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0]["status"] == "Applied"
+
+    def test_parse_with_withdraw_date(self):
+        """Test parsing withdraw_date field (field-gap fix)."""
+        parser = JobApplicationsParser()
+        data = {
+            "job_applications": [
+                {
+                    "Company Name": "Acme",
+                    "Job Title": "Engineer",
+                    "Application Date": "2024-01-01",
+                    "Status": "Withdrawn",
+                    "Withdraw Date": "2024-01-15",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert result[0]["withdraw_date"] == "2024-01-15"
+
+    def test_parse_status_empty(self):
+        """Test empty status returns None."""
+        parser = JobApplicationsParser()
+        data = {
+            "job_applications": [
+                {
+                    "Company Name": "Acme",
+                    "Job Title": "Engineer",
+                    "Application Date": "2024-01-01",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert result[0]["status"] is None
+
+    def test_parse_resume_used(self):
+        """Test resume_used field is still parsed."""
+        parser = JobApplicationsParser()
+        data = {
+            "job_applications": [
+                {
+                    "Company Name": "Acme",
+                    "Job Title": "Engineer",
+                    "Application Date": "2024-01-01",
+                    "Resume Name": "resume_v2.pdf",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert result[0]["resume_used"] == "resume_v2.pdf"
+
+    def test_parse_multiple_sources(self):
+        """Test merging from multiple job_applications sources."""
+        parser = JobApplicationsParser()
+        data = {
+            "job_applications": [
+                {
+                    "Company Name": "A",
+                    "Job Title": "T1",
+                    "Application Date": "2024-01-01",
+                    "Status": "Applied",
+                }
+            ],
+            "job_applications_1": [
+                {
+                    "Company Name": "B",
+                    "Job Title": "T2",
+                    "Application Date": "2024-02-01",
+                    "Status": "Interviewed",
+                }
+            ],
+        }
+        result = parser.parse(data)
+        assert len(result) == 2
+
+
+# =============================================================================
+# SimpleListParser Base
+# =============================================================================
+
+
+class TestSimpleListParser:
+    """Tests for SimpleListParser base class."""
+
+    def test_parse_maps_columns(self):
+        """Test column mapping from CSV to output fields."""
+        parser = _make_test_parser(
+            "test_key",
+            {"Source A": "a", "Source B": "b"},
+        )
+        data = {"test_key": [{"Source A": "val1", "Source B": "val2"}]}
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0] == {"a": "val1", "b": "val2"}
+
+    def test_parse_skips_whitespace_rows(self):
+        """Test rows with empty string values are skipped."""
+        parser = _make_test_parser(
+            "test_key",
+            {"Name": "name"},
+        )
+        data = {
+            "test_key": [
+                {"Name": ""},
+                {"Name": "Valid"},
+                {"Name": "  "},
+            ]
+        }
+        result = parser.parse(data)
+        # Empty string is falsy so skipped; "  " is truthy so kept
+        assert len(result) == 2
+        assert result[0]["name"] == "Valid"
+
+    def test_parse_missing_csv_key(self):
+        """Test missing CSV key returns empty list."""
+        parser = _make_test_parser("test_key", {"Name": "name"})
+        result = parser.parse({})
+        assert result == []
+
+    def test_parse_missing_columns_default_to_empty(self):
+        """Test missing CSV columns map to empty string."""
+        parser = _make_test_parser(
+            "test_key",
+            {"Col A": "a", "Col B": "b"},
+        )
+        data = {"test_key": [{"Col A": "only_a"}]}
+        result = parser.parse(data)
+        assert result[0]["a"] == "only_a"
+        assert result[0]["b"] == ""
+
+
+def _make_test_parser(csv_key: str, column_map: dict[str, str]) -> SimpleListParser:
+    """Factory to create a concrete SimpleListParser for testing."""
+
+    class _ConcreteParser(SimpleListParser):
+        @property
+        def section_key(self) -> str:
+            return csv_key
+
+        @property
+        def csv_key(self) -> str:
+            return csv_key
+
+        @property
+        def column_map(self) -> dict[str, str]:
+            return column_map
+
+    return _ConcreteParser()
+
+
+# =============================================================================
+# SimpleListParser-derived Parsers (profile_ext, network_ext, privacy)
+# =============================================================================
+
+
+class TestProfileExtParsers:
+    """Parametrized tests for all profile extension parsers."""
+
+    @pytest.mark.parametrize(
+        "parser_cls, csv_rows, expected",
+        [
+            (
+                CausesParser,
+                [{"Cause Name": "Environment"}],
+                [{"name": "Environment"}],
+            ),
+            (
+                CausesParser,
+                [],
+                [],
+            ),
+            (
+                InterestsParser,
+                [{"Interest Name": "Tech"}],
+                [{"name": "Tech"}],
+            ),
+            (
+                CoursesParser,
+                [{"Course Name": "Python 101", "School": "MIT"}],
+                [{"name": "Python 101", "school": "MIT"}],
+            ),
+            (
+                CoursesParser,
+                [{"Course Name": "Python 101"}],
+                [{"name": "Python 101", "school": ""}],
+            ),
+            (
+                HonorsAwardsParser,
+                [
+                    {
+                        "Title": "Best Paper",
+                        "Issuer": "IEEE",
+                        "Date": "2023-01",
+                        "Description": "Best paper award",
+                    }
+                ],
+                [
+                    {
+                        "title": "Best Paper",
+                        "issuer": "IEEE",
+                        "date": "2023-01",
+                        "description": "Best paper award",
+                    }
+                ],
+            ),
+            (
+                TestScoresParser,
+                [{"Test Name": "GRE", "Score": "340", "Test Date": "2022-05"}],
+                [{"name": "GRE", "score": "340", "date": "2022-05"}],
+            ),
+            (
+                PatentsParser,
+                [
+                    {
+                        "Title": "Patent 1",
+                        "Status": "Granted",
+                        "Patent Number": "US123",
+                        "Date": "2020",
+                    }
+                ],
+                [
+                    {
+                        "title": "Patent 1",
+                        "status": "Granted",
+                        "number": "US123",
+                        "date": "2020",
+                    }
+                ],
+            ),
+            (
+                OrganizationsParser,
+                [{"Organization Name": "ACM", "Title": "Member", "Date": "2022"}],
+                [{"name": "ACM", "title": "Member", "date": "2022"}],
+            ),
+            (
+                PublicationsParser,
+                [
+                    {
+                        "Title": "Paper",
+                        "Publisher": "ACM",
+                        "Publication Date": "2023",
+                        "Url": "https://example.com",
+                    }
+                ],
+                [
+                    {
+                        "title": "Paper",
+                        "publisher": "ACM",
+                        "date": "2023",
+                        "url": "https://example.com",
+                    }
+                ],
+            ),
+            (
+                VolunteerExperienceParser,
+                [
+                    {
+                        "Role": "Mentor",
+                        "Organization": "Code.org",
+                        "Cause": "Education",
+                        "Start Date": "2020-01",
+                        "End Date": "2022-12",
+                    }
+                ],
+                [
+                    {
+                        "role": "Mentor",
+                        "organization": "Code.org",
+                        "cause": "Education",
+                        "start_date": "2020-01",
+                        "end_date": "2022-12",
+                    }
+                ],
+            ),
+        ],
+    )
+    def test_parse_ext(self, parser_cls, csv_rows, expected):
+        """Test each profile_ext parser produces correct output."""
+        parser = parser_cls()
+        result = parser.parse({parser.csv_key: csv_rows})
+        assert result == expected
+
+    @pytest.mark.parametrize(
+        "parser_cls",
+        [
+            CausesParser,
+            InterestsParser,
+            CoursesParser,
+            HonorsAwardsParser,
+            TestScoresParser,
+            PatentsParser,
+            OrganizationsParser,
+            PublicationsParser,
+            VolunteerExperienceParser,
+        ],
+    )
+    def test_section_key(self, parser_cls):
+        """Test each parser has a non-empty section_key."""
+        parser = parser_cls()
+        assert parser.section_key
+
+
+class TestNetworkExtParsers:
+    """Tests for network extension parsers."""
+
+    def test_groups_parse(self):
+        """Test GroupsParser maps columns correctly."""
+        parser = GroupsParser()
+        data = {
+            "groups": [
+                {
+                    "Group Name": "Python Developers",
+                    "Group URL": "https://linkedin.com/groups/123",
+                }
+            ]
+        }
+        result = parser.parse(data)
+        assert len(result) == 1
+        assert result[0]["name"] == "Python Developers"
+        assert result[0]["url"] == "https://linkedin.com/groups/123"
+
+    def test_groups_empty(self):
+        """Test GroupsParser returns empty for no data."""
+        parser = GroupsParser()
+        assert parser.parse({}) == []
+
+    def test_groups_section_key(self):
+        """Test GroupsParser section_key."""
+        assert GroupsParser().section_key == "groups"
+
+
+class TestPrivacyParsers:
+    """Parametrized tests for all privacy/account parsers."""
+
+    @pytest.mark.parametrize(
+        "parser_cls, csv_rows, expected",
+        [
+            (
+                ContactSettingsParser,
+                [{"Setting": "Email", "Value": "on"}],
+                [{"setting": "Email", "value": "on"}],
+            ),
+            (
+                DataExportHistoryParser,
+                [{"Requested At": "2023-01", "Completed At": "2023-01-15"}],
+                [{"requested_at": "2023-01", "completed_at": "2023-01-15"}],
+            ),
+            (
+                DeletionHistoryParser,
+                [{"Action": "Deleted", "Date": "2023-01"}],
+                [{"action": "Deleted", "date": "2023-01"}],
+            ),
+            (
+                WhoViewedProfileParser,
+                [{"Date": "2023-01", "Viewer Name": "Alice"}],
+                [{"date": "2023-01", "viewer": "Alice"}],
+            ),
+            (
+                LinkedInSalaryParser,
+                [{"Company": "Acme", "Title": "Engineer", "Salary": "$120k"}],
+                [{"company": "Acme", "title": "Engineer", "salary": "$120k"}],
+            ),
+            (
+                ProfileForBusinessParser,
+                [{"Company Name": "Acme", "Title": "Contact"}],
+                [{"company": "Acme", "title": "Contact"}],
+            ),
+            (
+                ProfileSummaryParser,
+                [{"Summary": "Extended profile summary text."}],
+                [{"summary": "Extended profile summary text."}],
+            ),
+        ],
+    )
+    def test_parse_privacy(self, parser_cls, csv_rows, expected):
+        """Test each privacy parser produces correct output."""
+        parser = parser_cls()
+        result = parser.parse({parser.csv_key: csv_rows})
+        assert result == expected
+
+    @pytest.mark.parametrize(
+        "parser_cls",
+        [
+            ContactSettingsParser,
+            DataExportHistoryParser,
+            DeletionHistoryParser,
+            WhoViewedProfileParser,
+            LinkedInSalaryParser,
+            ProfileForBusinessParser,
+            ProfileSummaryParser,
+        ],
+    )
+    def test_section_key(self, parser_cls):
+        """Test each parser has a non-empty section_key."""
+        parser = parser_cls()
+        assert parser.section_key

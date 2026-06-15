@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-15
+
+### Added
+- 17 new parsers/formatters for profile extensions (causes, interests, courses, honors/awards, test scores, patents, organizations, publications, volunteer experience), network (groups), and privacy/account data (contact settings, data export history, deletion history, who viewed profile, LinkedIn salary, profile for business, profile summary) — complete data extraction coverage
+- `SimpleListParser`/`SimpleListFormatter` base classes for trivial CSV-to-list parsers — reduces boilerplate for new sections
+- `_TrackingDict` in converter: warns when CSV files in the export have no corresponding parser (WARNING-level log)
+- 121 new tests (430 total) covering all new parsers, formatters, field gaps, and unconsumed-key detection
+
+### Fixed
+- LAN Ads parser: filename key `lan_ads_engagement` → `linkedin_audience_network_ad_engagement`
+- ProfileMetaParser: missing `maiden_name`, `public_profile_url`, `address` fields
+- EducationParser: missing `field` (Field of Study) and `grade` fields
+- JobApplicationsParser: missing `status` and `withdraw_date` fields
+- Class ordering bug in `parsers/base.py` and `formatters/base.py`: `SimpleListParser`/`SimpleListFormatter` defined before their parent classes caused `NameError` on import
+
+### Changed
+- `LinkedInToMarkdownConverter.convert()` now wraps `raw_data` in `_TrackingDict` to detect unconsumed CSV files
+- Bumped minimum Python from 3.10 to 3.13 (ruff target)
+- Updated E2E test sample export to include 5 additional CSV file types
+
 ## [0.6.0] - 2026-06-15
 
 ### Security
@@ -165,8 +185,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SOLID architecture for extensibility
 - Security features (path traversal protection, URL sanitization, file size limits)
 
-[Unreleased]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.6.0...HEAD
-[0.6.0]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.5.0...v0.6.0
+[Unreleased]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.6.0...v0.7.0
 [0.5.0]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/juanmanueldaza/linkedin2md/compare/v0.3.0...v0.3.1

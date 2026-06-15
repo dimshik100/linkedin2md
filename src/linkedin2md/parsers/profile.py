@@ -129,6 +129,9 @@ class ProfileMetaParser(BaseParser):
 
         return {
             "industry": profile.get("Industry", "") or None,
+            "maiden_name": profile.get("Maiden Name", "") or None,
+            "public_profile_url": profile.get("Public Profile URL", "") or None,
+            "address": profile.get("Address", "") or None,
             "twitter": self._parse_twitter(profile.get("Twitter Handles", "")),
             "websites": self._parse_websites(profile.get("Websites", "")),
             "birth_date": profile.get("Birth Date", "") or None,

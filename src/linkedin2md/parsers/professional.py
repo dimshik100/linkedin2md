@@ -129,12 +129,13 @@ class EducationParser(BaseParser):
             entry = {
                 "institution": school,
                 "degree": self._create_bilingual(degree, degree_lang),
-                "field": None,
+                "field": edu.get("Field of Study", "") or None,
                 "start": start_date.split("-")[0] if start_date else "",
                 "end": end_date.split("-")[0] if end_date else None,
                 "location": None,
                 "notes": self._create_bilingual(notes, notes_lang) if notes else None,
                 "activities": activities or None,
+                "grade": edu.get("Grade", "") or None,
             }
             education.append(entry)
 

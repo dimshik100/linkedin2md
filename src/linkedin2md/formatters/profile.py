@@ -47,4 +47,52 @@ class ProfileFormatter(BaseFormatter):
             lines.append(summary)
             lines.append("")
 
+        meta = data.get("profile_meta", {})
+        if meta:
+            detail_lines: list[str] = []
+            if meta.get("industry"):
+                detail_lines.append(
+                    f"- **Industry:** {self._escape_table_cell(meta['industry'])}"
+                )
+            if meta.get("maiden_name"):
+                detail_lines.append(
+                    f"- **Maiden Name:** {self._escape_table_cell(meta['maiden_name'])}"
+                )
+            if meta.get("public_profile_url"):
+                url = self._sanitize_url(meta["public_profile_url"])
+                detail_lines.append(
+                    f"- **Profile URL:** "
+                    f"[{self._escape_table_cell(meta['public_profile_url'])}]"
+                    f"({url})"
+                )
+            if meta.get("address"):
+                detail_lines.append(
+                    f"- **Address:** {self._escape_table_cell(meta['address'])}"
+                )
+            if meta.get("twitter"):
+                detail_lines.append(
+                    f"- **Twitter:** {self._escape_table_cell(meta['twitter'])}"
+                )
+            if meta.get("websites"):
+                for site in meta["websites"]:
+                    detail_lines.append(
+                        f"- **Website:** {self._escape_table_cell(site)}"
+                    )
+            if meta.get("birth_date"):
+                detail_lines.append(
+                    f"- **Birth Date:** {self._escape_table_cell(meta['birth_date'])}"
+                )
+            if meta.get("registered_at"):
+                detail_lines.append(
+                    f"- **Member Since:** "
+                    f"{self._escape_table_cell(meta['registered_at'])}"
+                )
+            if meta.get("connections_count"):
+                detail_lines.append(f"- **Connections:** {meta['connections_count']}")
+            if detail_lines:
+                lines.append("## Profile Details")
+                lines.append("")
+                lines.extend(detail_lines)
+                lines.append("")
+
         return "\n".join(lines)

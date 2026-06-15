@@ -1,5 +1,8 @@
 """Tests for all formatter modules."""
 
+import pytest
+
+from linkedin2md.formatters.base import SimpleListFormatter
 from linkedin2md.formatters.content import (
     ArticlesFormatter,
     CommentsFormatter,
@@ -13,7 +16,20 @@ from linkedin2md.formatters.content import (
     ScriptFormatter,
     VotesFormatter,
 )
-from linkedin2md.formatters.jobs import JobDescriptionFormatter
+from linkedin2md.formatters.jobs import (
+    JobApplicationsFormatter,
+    JobDescriptionFormatter,
+)
+from linkedin2md.formatters.network_ext import GroupsFormatter
+from linkedin2md.formatters.privacy import (
+    ContactSettingsFormatter,
+    DataExportHistoryFormatter,
+    DeletionHistoryFormatter,
+    LinkedInSalaryFormatter,
+    ProfileForBusinessFormatter,
+    ProfileSummaryFormatter,
+    WhoViewedProfileFormatter,
+)
 from linkedin2md.formatters.professional import (
     CertificationsFormatter,
     EducationFormatter,
@@ -23,6 +39,17 @@ from linkedin2md.formatters.professional import (
     SkillsFormatter,
 )
 from linkedin2md.formatters.profile import ProfileFormatter
+from linkedin2md.formatters.profile_ext import (
+    CausesFormatter,
+    CoursesFormatter,
+    HonorsAwardsFormatter,
+    InterestsFormatter,
+    OrganizationsFormatter,
+    PatentsFormatter,
+    PublicationsFormatter,
+    TestScoresFormatter,
+    VolunteerExperienceFormatter,
+)
 from linkedin2md.protocols import BilingualText
 
 # =============================================================================
@@ -89,6 +116,56 @@ class TestProfileFormatter:
 
         assert "# Juan García" in result
         assert "Ingeniero de Software" in result
+
+    # ---- Field-gap regression tests (maiden_name, public_profile_url, address) ----
+
+    def test_format_maiden_name(self):
+        """Test rendering Maiden Name in profile meta (field-gap fix)."""
+        formatter = ProfileFormatter()
+        data = {
+            "name": "Jane",
+            "title": BilingualText(),
+            "email": "",
+            "phone": "",
+            "location": "",
+            "summary": BilingualText(),
+            "profile_meta": {"maiden_name": "Smith"},
+        }
+        result = formatter.format(data, "en")
+        assert "Maiden Name" in result
+        assert "Smith" in result
+
+    def test_format_public_profile_url(self):
+        """Test rendering Public Profile URL in profile meta (field-gap fix)."""
+        formatter = ProfileFormatter()
+        data = {
+            "name": "John",
+            "title": BilingualText(),
+            "email": "",
+            "phone": "",
+            "location": "",
+            "summary": BilingualText(),
+            "profile_meta": {"public_profile_url": "https://linkedin.com/in/johndoe"},
+        }
+        result = formatter.format(data, "en")
+        assert "Profile URL" in result
+        assert "linkedin.com/in/johndoe" in result
+
+    def test_format_address(self):
+        """Test rendering Address in profile meta (field-gap fix)."""
+        formatter = ProfileFormatter()
+        data = {
+            "name": "John",
+            "title": BilingualText(),
+            "email": "",
+            "phone": "",
+            "location": "",
+            "summary": BilingualText(),
+            "profile_meta": {"address": "123 Main St"},
+        }
+        result = formatter.format(data, "en")
+        assert "Address" in result
+        assert "123 Main St" in result
 
 
 # =============================================================================
@@ -202,6 +279,48 @@ class TestEducationFormatter:
 
         assert "MIT" in result
         assert "B.S. Computer Science" in result or "Computer Science" in result
+
+    # ---- Field-gap regression tests (field, grade) ----
+
+    def test_format_education_field_and_grade(self):
+        """Test rendering Field of Study and Grade (field-gap fix)."""
+        formatter = EducationFormatter()
+        data = [
+            {
+                "institution": "MIT",
+                "degree": BilingualText(en="B.S.", es=""),
+                "field": "Computer Engineering",
+                "grade": "3.8 GPA",
+                "start": "2010",
+                "end": "2014",
+                "notes": BilingualText(),
+                "activities": "",
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "Field of Study" in result
+        assert "Computer Engineering" in result
+        assert "Grade" in result
+        assert "3.8 GPA" in result
+
+    def test_format_education_no_field_or_grade(self):
+        """Test rendering without field/grade does not show those lines."""
+        formatter = EducationFormatter()
+        data = [
+            {
+                "institution": "MIT",
+                "degree": BilingualText(en="B.S.", es=""),
+                "field": None,
+                "grade": None,
+                "start": "2010",
+                "end": "2014",
+                "notes": BilingualText(),
+                "activities": "",
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "Field of Study" not in result
+        assert "Grade" not in result
 
 
 # =============================================================================
@@ -975,3 +1094,288 @@ class TestUrlSanitizationIntegration:
         result = f.format(comments, "en")
         assert "data:" not in result
         assert "script" not in result
+
+
+# =============================================================================
+# Job Applications Formatter (field-gap tests)
+# =============================================================================
+
+
+class TestJobApplicationsFormatter:
+    """Tests for JobApplicationsFormatter."""
+
+    def test_format_with_status(self):
+        """Test rendering Status column (field-gap fix)."""
+        formatter = JobApplicationsFormatter()
+        data = [
+            {
+                "company": "Acme",
+                "title": "Engineer",
+                "date": "2024-01-01",
+                "status": "Applied",
+                "resume_used": "",
+            }
+        ]
+        result = formatter.format(data, "en")
+        assert "Status" in result
+        assert "Applied" in result
+
+    def test_format_empty_data(self):
+        """Test empty data returns empty string."""
+        formatter = JobApplicationsFormatter()
+        assert formatter.format([], "en") == ""
+
+    def test_format_section_key(self):
+        """Test section_key is correct."""
+        formatter = JobApplicationsFormatter()
+        assert formatter.section_key == "job_applications"
+
+
+# =============================================================================
+# SimpleListFormatter Base
+# =============================================================================
+
+
+class TestSimpleListFormatter:
+    """Tests for SimpleListFormatter base class."""
+
+    def test_format_table(self):
+        """Test rendering data as markdown table."""
+        formatter = _make_test_formatter(
+            section_key="test",
+            title="Test Section",
+            headers=["Col A", "Col B"],
+            fields=["a", "b"],
+        )
+        data = [{"a": "val1", "b": "val2"}]
+        result = formatter.format(data, "en")
+        assert "# Test Section" in result
+        assert "| Col A | Col B |" in result
+        assert "| val1 | val2 |" in result
+
+    def test_format_empty_data(self):
+        """Test empty data returns ''."""
+        formatter = _make_test_formatter(
+            section_key="test",
+            title="Test",
+            headers=["A"],
+            fields=["a"],
+        )
+        assert formatter.format([], "en") == ""
+        assert formatter.format(None, "en") == ""
+
+    def test_format_escapes_pipes(self):
+        """Test pipe characters in cell values are escaped."""
+        formatter = _make_test_formatter(
+            section_key="test",
+            title="Test",
+            headers=["Value"],
+            fields=["v"],
+        )
+        data = [{"v": "a | b"}]
+        result = formatter.format(data, "en")
+        assert "a \\| b" in result
+
+
+def _make_test_formatter(
+    section_key: str,
+    title: str,
+    headers: list[str],
+    fields: list[str],
+) -> SimpleListFormatter:
+    """Factory to create a concrete SimpleListFormatter for testing."""
+
+    class _ConcreteFormatter(SimpleListFormatter):
+        @property
+        def section_key(self) -> str:
+            return section_key
+
+        @property
+        def title(self) -> str:
+            return title
+
+        @property
+        def headers(self) -> list[str]:
+            return headers
+
+        @property
+        def fields(self) -> list[str]:
+            return fields
+
+    return _ConcreteFormatter()
+
+
+# =============================================================================
+# SimpleListFormatter-derived Formatters (profile_ext, network_ext, privacy)
+# =============================================================================
+
+
+class TestProfileExtFormatters:
+    """Parametrized tests for all profile extension formatters."""
+
+    @pytest.mark.parametrize(
+        "formatter_cls, data, expected_heading",
+        [
+            (CausesFormatter, [{"name": "Environment"}], "Causes"),
+            (InterestsFormatter, [{"name": "Tech"}], "Interests"),
+            (CoursesFormatter, [{"name": "Python 101", "school": "MIT"}], "Courses"),
+            (HonorsAwardsFormatter, [{"title": "Award"}], "Honors & Awards"),
+            (TestScoresFormatter, [{"name": "GRE"}], "Test Scores"),
+            (PatentsFormatter, [{"title": "Patent"}], "Patents"),
+            (OrganizationsFormatter, [{"name": "ACM"}], "Organizations"),
+            (PublicationsFormatter, [{"title": "Paper"}], "Publications"),
+            (
+                VolunteerExperienceFormatter,
+                [{"role": "Mentor"}],
+                "Volunteer Experience",
+            ),
+        ],
+    )
+    def test_format_ext(self, formatter_cls, data, expected_heading):
+        """Test each profile_ext formatter renders correct heading."""
+        formatter = formatter_cls()
+        result = formatter.format(data, "en")
+        assert f"# {expected_heading}" in result
+
+    @pytest.mark.parametrize(
+        "formatter_cls",
+        [
+            CausesFormatter,
+            InterestsFormatter,
+            CoursesFormatter,
+            HonorsAwardsFormatter,
+            TestScoresFormatter,
+            PatentsFormatter,
+            OrganizationsFormatter,
+            PublicationsFormatter,
+            VolunteerExperienceFormatter,
+        ],
+    )
+    def test_empty_data(self, formatter_cls):
+        """Test each returns '' for empty data."""
+        formatter = formatter_cls()
+        assert formatter.format([], "en") == ""
+
+    @pytest.mark.parametrize(
+        "formatter_cls",
+        [
+            CausesFormatter,
+            InterestsFormatter,
+            CoursesFormatter,
+            HonorsAwardsFormatter,
+            TestScoresFormatter,
+            PatentsFormatter,
+            OrganizationsFormatter,
+            PublicationsFormatter,
+            VolunteerExperienceFormatter,
+        ],
+    )
+    def test_section_key(self, formatter_cls):
+        """Test each has a non-empty section_key."""
+        formatter = formatter_cls()
+        assert formatter.section_key
+
+
+class TestNetworkExtFormatters:
+    """Tests for network extension formatters."""
+
+    def test_groups_format(self):
+        """Test GroupsFormatter renders heading and data."""
+        formatter = GroupsFormatter()
+        data = [{"name": "Python Devs", "url": "https://example.com"}]
+        result = formatter.format(data, "en")
+        assert "# Groups" in result
+        assert "Python Devs" in result
+
+    def test_groups_empty(self):
+        """Test GroupsFormatter returns '' for empty data."""
+        formatter = GroupsFormatter()
+        assert formatter.format([], "en") == ""
+
+    def test_groups_section_key(self):
+        """Test GroupsFormatter section_key."""
+        assert GroupsFormatter().section_key == "groups"
+
+
+class TestPrivacyFormatters:
+    """Parametrized tests for all privacy/account formatters."""
+
+    @pytest.mark.parametrize(
+        "formatter_cls, data, expected_heading",
+        [
+            (
+                ContactSettingsFormatter,
+                [{"setting": "Email", "value": "on"}],
+                "Contact Settings",
+            ),
+            (
+                DataExportHistoryFormatter,
+                [{"requested_at": "2023-01"}],
+                "Data Export History",
+            ),
+            (
+                DeletionHistoryFormatter,
+                [{"action": "Deleted", "date": "2023-01"}],
+                "Deletion History",
+            ),
+            (
+                WhoViewedProfileFormatter,
+                [{"date": "2023-01", "viewer": "Alice"}],
+                "Who Viewed Your Profile",
+            ),
+            (
+                LinkedInSalaryFormatter,
+                [{"company": "Acme", "salary": "$120k"}],
+                "LinkedIn Salary",
+            ),
+            (
+                ProfileForBusinessFormatter,
+                [{"company": "Acme"}],
+                "Profile for Business",
+            ),
+            (
+                ProfileSummaryFormatter,
+                [{"summary": "Extended text."}],
+                "Profile Summary",
+            ),
+        ],
+    )
+    def test_format_privacy(self, formatter_cls, data, expected_heading):
+        """Test each privacy formatter renders correct heading."""
+        formatter = formatter_cls()
+        result = formatter.format(data, "en")
+        assert f"# {expected_heading}" in result
+
+    @pytest.mark.parametrize(
+        "formatter_cls",
+        [
+            ContactSettingsFormatter,
+            DataExportHistoryFormatter,
+            DeletionHistoryFormatter,
+            WhoViewedProfileFormatter,
+            LinkedInSalaryFormatter,
+            ProfileForBusinessFormatter,
+            ProfileSummaryFormatter,
+        ],
+    )
+    def test_empty_data(self, formatter_cls):
+        """Test each returns '' for empty data."""
+        formatter = formatter_cls()
+        assert formatter.format([], "en") == ""
+
+    @pytest.mark.parametrize(
+        "formatter_cls",
+        [
+            ContactSettingsFormatter,
+            DataExportHistoryFormatter,
+            DeletionHistoryFormatter,
+            WhoViewedProfileFormatter,
+            LinkedInSalaryFormatter,
+            ProfileForBusinessFormatter,
+            ProfileSummaryFormatter,
+        ],
+    )
+    def test_section_key(self, formatter_cls):
+        """Test each has a non-empty section_key."""
+        formatter = formatter_cls()
+        assert formatter.section_key

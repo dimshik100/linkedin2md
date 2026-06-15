@@ -96,6 +96,16 @@ class EducationFormatter(BaseFormatter):
                 lines.append(" | ".join(meta_parts))
             lines.append("")
 
+            field = edu.get("field")
+            if field:
+                lines.append(f"**Field of Study:** {field}")
+                lines.append("")
+
+            grade = edu.get("grade")
+            if grade:
+                lines.append(f"**Grade:** {grade}")
+                lines.append("")
+
             notes = self._get_text(edu.get("notes"), lang)
             if notes:
                 lines.append(f"> {notes}")
