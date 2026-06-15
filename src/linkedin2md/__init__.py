@@ -25,11 +25,6 @@ from linkedin2md.converter import (  # noqa: E402
     create_converter,
 )
 
-# Backward compatibility - import old API
-# (These are deprecated but kept for compatibility)
-from linkedin2md.formatter import MarkdownFormatter  # noqa: E402
-from linkedin2md.parser import LinkedInExportParser  # noqa: E402
-
 # Protocols for type hints and custom implementations
 from linkedin2md.protocols import (  # noqa: E402
     BilingualText,
@@ -70,7 +65,4 @@ __all__ = [
     "get_parser_registry",
     "register_formatter",
     "register_parser",
-    # Backward compatibility (deprecated)
-    "LinkedInExportParser",
-    "MarkdownFormatter",
 ]

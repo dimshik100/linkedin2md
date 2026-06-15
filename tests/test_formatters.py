@@ -528,7 +528,7 @@ class TestPostsFormatter:
             {
                 "date": "2023-06-15",
                 "url": "https://linkedin.com/posts/1",
-                "content": {"en": "Great post!"},
+                "content": BilingualText(en="Great post!"),
             }
         ]
         result = formatter.format(data, "en")
@@ -546,8 +546,8 @@ class TestPostsFormatter:
         """Test multiple posts separated by ---."""
         formatter = PostsFormatter()
         data = [
-            {"date": "2023-01-01", "content": {"en": "First"}},
-            {"date": "2023-06-15", "content": {"en": "Second"}},
+            {"date": "2023-01-01", "content": BilingualText(en="First")},
+            {"date": "2023-06-15", "content": BilingualText(en="Second")},
         ]
         result = formatter.format(data, "en")
         assert result.count("---") == 2
@@ -574,7 +574,7 @@ class TestCommentsFormatter:
             {
                 "date": "2023-06-15",
                 "url": "https://example.com",
-                "message": {"en": "Great article!"},
+                "message": BilingualText(en="Great article!"),
             }
         ]
         result = formatter.format(data, "en")
@@ -591,8 +591,8 @@ class TestCommentsFormatter:
         """Test multiple comments rendered in order."""
         formatter = CommentsFormatter()
         data = [
-            {"date": "2023-01-01", "message": {"en": "First"}},
-            {"date": "2023-06-15", "message": {"en": "Second"}},
+            {"date": "2023-01-01", "message": BilingualText(en="First")},
+            {"date": "2023-06-15", "message": BilingualText(en="Second")},
         ]
         result = formatter.format(data, "en")
         assert "**2023-01-01**" in result
@@ -601,7 +601,7 @@ class TestCommentsFormatter:
     def test_format_missing_url_omitted(self) -> None:
         """Test comment without url omits the View link."""
         formatter = CommentsFormatter()
-        data = [{"date": "2023-06-15", "message": {"en": "Test"}}]
+        data = [{"date": "2023-06-15", "message": BilingualText(en="Test")}]
         result = formatter.format(data, "en")
         assert "[View]" not in result
 

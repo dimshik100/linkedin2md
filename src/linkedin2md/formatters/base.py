@@ -57,12 +57,6 @@ class BaseFormatter(ABC, SectionFormatter):
             return multilingual
         if isinstance(multilingual, MultilingualText):
             return multilingual.get(lang, fallback_chain=fallback_chain or ["en", "es"])
-        # Dict fallback for compatibility
-        if lang in multilingual and multilingual[lang]:
-            return multilingual[lang]
-        for fb in fallback_chain or ["en", "es"]:
-            if fb in multilingual and multilingual[fb]:
-                return multilingual[fb]
         return ""
 
     def _escape_pipe(self, text: str | None) -> str:
