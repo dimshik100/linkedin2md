@@ -364,3 +364,99 @@ class TestConverterUnconsumedKeys:
         assert any("unknown_csv_1" in msg for msg in caplog.messages)
         assert any("unknown_csv_2" in msg for msg in caplog.messages)
         assert not any("profile" in msg for msg in caplog.messages)
+
+    def test_known_empty_keys_not_warned(self, caplog):
+        """Known-empty CSV keys do not trigger WARNING."""
+        import logging
+
+        caplog.set_level(logging.WARNING)
+
+        raw_data = {
+            "profile": [{"First Name": "Test", "Last Name": "User", "Headline": ""}],
+            "guide_messages": [],
+            "learning_coach_messages": [],
+            "learningcoachmessages": [],
+        }
+
+        import linkedin2md.formatters  # noqa: F401
+        import linkedin2md.parsers  # noqa: F401
+        from linkedin2md.registry import get_formatter_registry, get_parser_registry
+
+        extractor = DictDataExtractor(raw_data)
+        writer = InMemoryWriter()
+
+        converter = LinkedInToMarkdownConverter(
+            extractor=extractor,
+            parser_registry=get_parser_registry(),
+            formatter_registry=get_formatter_registry(),
+            writer=writer,
+        )
+        converter.convert(lang="en")
+
+        assert not any("guide_messages" in msg for msg in caplog.messages)
+        assert not any("learning_coach_messages" in msg for msg in caplog.messages)
+        assert not any("learningcoachmessages" in msg for msg in caplog.messages)
+
+
+# =============================================================================
+# _get_csv Prefix Matching Tests
+# =============================================================================
+
+
+class _TestParser:  # Concrete subclass of BaseParser for testing _get_csv
+    """Minimal test helper that exposes _get_csv."""
+
+    def _get_csv(self, raw_data: dict, key: str) -> list:
+        from linkedin2md.parsers.base import BaseParser  # noqa: E402
+
+        # BaseParser._get_csv is a regular method; we call it via delegation.
+        return BaseParser._get_csv(self, raw_data, key)  # type: ignore[arg-type]
+
+
+class TestGetCsvPrefixMatch:
+    """Tests for _get_csv prefix-matching fallback."""
+
+    def test_exact_match_returns_directly(self):
+        """Exact key match returns data without prefix fallback."""
+        helper = _TestParser()
+        result = helper._get_csv({"shares": [{"a": 1}]}, "shares")
+        assert result == [{"a": 1}]
+
+    def test_suffix_match_returns_data(self):
+        """Suffixed key (key_NUMBER) is found via prefix match."""
+        helper = _TestParser()
+        result = helper._get_csv({"shares_12345": [{"a": 1}]}, "shares")
+        assert result == [{"a": 1}]
+
+    def test_no_match_returns_empty(self):
+        """No matching key returns empty list."""
+        helper = _TestParser()
+        result = helper._get_csv({"other": [{"a": 1}]}, "shares")
+        assert result == []
+
+    def test_non_numeric_suffix_not_matched(self):
+        """Non-numeric suffix does NOT trigger prefix match."""
+        helper = _TestParser()
+        result = helper._get_csv({"shares_extra": [{"a": 1}]}, "shares")
+        assert result == []
+
+    def test_exact_precedence_over_suffix(self):
+        """Exact match takes precedence when both exist."""
+        helper = _TestParser()
+        result = helper._get_csv(
+            {"shares": [{"exact": True}], "shares_12345": [{"suffix": True}]},
+            "shares",
+        )
+        assert result == [{"exact": True}]
+
+    def test_suffix_path_tracks_via_tracking_dict(self):
+        """Prefix match path records both looked-up keys via _get()."""
+        from linkedin2md.converter import _TrackingDict
+
+        helper = _TestParser()
+        raw = _TrackingDict({"shares_12345": [{"a": 1}]})
+        result = helper._get_csv(raw, "shares")
+        assert result == [{"a": 1}]
+        # Exact-key lookup (miss) + suffixed-key lookup (hit)
+        assert "shares" in raw.accessed_keys
+        assert "shares_12345" in raw.accessed_keys

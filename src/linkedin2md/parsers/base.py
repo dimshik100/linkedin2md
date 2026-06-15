@@ -4,7 +4,9 @@ Provides common parsing functionality that section parsers can use.
 Dependency Inversion: Depends on LanguageDetector protocol.
 """
 
+import re
 from abc import ABC, abstractmethod
+from typing import Any
 
 from linkedin2md.language import (
     BilingualTextFactory,
@@ -17,6 +19,9 @@ from linkedin2md.protocols import (
     MultilingualText,
     SectionParser,
 )
+
+# Sentinel for _get_csv to distinguish "key not found" from "key has empty list"
+_MISSING: Any = object()
 
 # Month names for date formatting
 MONTHS = [
@@ -68,8 +73,22 @@ class BaseParser(ABC, SectionParser):
     # ========================================================================
 
     def _get_csv(self, raw_data: dict[str, list[dict]], key: str) -> list[dict]:
-        """Get CSV data by key."""
-        return raw_data.get(key, [])
+        """Get CSV data by key, with prefix fallback for user-ID-suffixed keys.
+
+        Tries exact match first (via ``.get()`` so ``_TrackingDict`` records
+        the access), then falls back to matching ``{key}_\\d+`` (LinkedIn's
+        pattern when appending the member ID to filenames).
+        """
+        # Exact match via get() to track access in _TrackingDict
+        result = raw_data.get(key, _MISSING)
+        if result is not _MISSING:
+            return result  # type: ignore[return-type]
+        # Prefix match: key_NUMBER (LinkedIn user-ID suffix on filenames)
+        pattern = re.compile(rf"^{re.escape(key)}_\d+$")
+        for k in raw_data:
+            if pattern.fullmatch(k):
+                return raw_data.get(k, [])
+        return []
 
     def _merge_csv_sources(
         self, raw_data: dict[str, list[dict]], keys: list[str]

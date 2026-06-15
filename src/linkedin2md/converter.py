@@ -18,6 +18,17 @@ from linkedin2md.protocols import (
 
 logger = logging.getLogger(__name__)
 
+# CSV keys that LinkedIn exports but are known to be always empty
+# (or contain no useful data). Suppress warnings for these.
+_KNOWN_EMPTY_KEYS: frozenset[str] = frozenset(
+    {
+        "guide_messages",
+        "learning_coach_messages",
+        "learning_role_play_messages",
+        "learningcoachmessages",
+    }
+)
+
 
 class _TrackingDict(dict):
     """Dict subclass that records which keys are accessed via get().
@@ -83,7 +94,7 @@ class LinkedInToMarkdownConverter:
 
         # Step 2b: Warn about unconsumed CSV files
         all_keys = set(raw_data.keys())
-        unconsumed = all_keys - tracked.accessed_keys
+        unconsumed = all_keys - tracked.accessed_keys - _KNOWN_EMPTY_KEYS
         for key in sorted(unconsumed):
             logger.warning("No parser consumed CSV key: %s", key)
 

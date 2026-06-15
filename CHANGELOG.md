@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-06-15
+
+### Fixed
+- `_get_csv` prefix matching: 7 content CSV files with user-ID suffix (`shares_26645013`, `comments_26645013`, etc.) now parsed correctly — recovers ~950 records
+- LAN Ads parser: supports both `lan_ads_engagement` (current LinkedIn export) and `linkedin_audience_network_ad_engagement` (older format) — recovers 155 records
+- Known-empty CSV warnings suppressed for `guide_messages`, `learning_coach_messages`, `learning_role_play_messages`, `LearningCoachMessages`
+
+### Added
+- 7 new tests for `_get_csv` prefix-matching fallback and known-empty key suppression
+
 ## [0.7.0] - 2026-06-15
 
 ### Added
