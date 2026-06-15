@@ -321,7 +321,9 @@ class TestTableFormattersEscapeCells:
     def test_logins_formatter_escapes_pipe(self) -> None:
         from linkedin2md.formatters.activity import LoginsFormatter
 
-        data = [{"date": "2026-06-15", "ip_address": "1.1.1.1", "login_type": "web|api"}]
+        data = [
+            {"date": "2026-06-15", "ip_address": "1.1.1.1", "login_type": "web|api"}
+        ]
         out = LoginsFormatter().format(data, "en")
         self._assert_safe(out)
         assert "web\\|api" in out
@@ -429,7 +431,11 @@ class TestTableFormattersEscapeCells:
         from linkedin2md.formatters.content import ReactionsFormatter
 
         data = [
-            {"date": "2026-06-15", "type": "LIKE | PRAISE", "url": "https://example.com"}
+            {
+                "date": "2026-06-15",
+                "type": "LIKE | PRAISE",
+                "url": "https://example.com",
+            }
         ]
         out = ReactionsFormatter().format(data, "en")
         self._assert_safe(out)
@@ -438,9 +444,7 @@ class TestTableFormattersEscapeCells:
     def test_learning_reviews_formatter_escapes_pipe(self) -> None:
         from linkedin2md.formatters.learning import LearningReviewsFormatter
 
-        data = [
-            {"content": "Great | Amazing", "rating": "5", "date": "2026-06-15"}
-        ]
+        data = [{"content": "Great | Amazing", "rating": "5", "date": "2026-06-15"}]
         out = LearningReviewsFormatter().format(data, "en")
         self._assert_safe(out)
         assert "Great \\| Amazing" in out
