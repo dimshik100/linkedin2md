@@ -221,7 +221,6 @@ def enrich_file_with_skills(filepath, skills):
     for skill in skills:
         escaped = re.escape(skill)
         # Match either an existing link [[...]] OR the skill word.
-        # This prevents matching "Java" inside "[[JavaScript]]".
         pattern = re.compile(rf"(\[\[.*?\]\])|(\b{escaped}\b)", re.IGNORECASE)
         
         def replace(match):
@@ -341,6 +340,41 @@ def enrich_table_company_column(filepath):
     with open(filepath, 'w', encoding='utf-8') as f:
         f.writelines(new_lines)
 
+def enrich_connections_table(filepath):
+    """Wrap both 'Name' (column 1) and 'Company' (column 2) in connections.md table, resolving any extra pipe characters."""
+    if not filepath.exists():
+        return
+    with open(filepath, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+        
+    new_lines = []
+    for line in lines:
+        if line.startswith('|'):
+            parts = [p.strip() for p in line.split('|')]
+            if len(parts) >= 6:
+                name = parts[1]
+                connected = parts[-2]
+                position = parts[-3]
+                
+                # Reconstruct company from any middle parts
+                company_parts = parts[2:-3]
+                company = " - ".join([cp.replace('[[', '').replace(']]', '').strip() for cp in company_parts])
+                company = company.replace('\\\\', '\\').replace('\\', '').strip()
+                
+                if name.lower() != 'name' and not name.startswith('---'):
+                    name_link = f"[[{name.replace('[[', '').replace(']]', '')}]]"
+                    company_link = f"[[{company}]]" if company else ""
+                    line = f"| {name_link} | {company_link} | {position} | {connected} |\n"
+                elif name.lower() == 'name':
+                    line = "| Name | Company | Position | Connected |\n"
+                elif name.startswith('---'):
+                    line = "|------|---------|----------|-----------|\n"
+                    
+        new_lines.append(line)
+        
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.writelines(new_lines)
+
 def enrich_recommendations_companies(filepath):
     """Wrap company names in recommendation headers: **Role** at Company | Date."""
     if not filepath.exists():
@@ -433,11 +467,15 @@ def parse_connections_stats(connections_file):
             
             total_connections += 1
             
-            company = parts[2].replace('[[', '').replace(']]', '').strip()
+            # Safely fetch company parts
+            company_parts = parts[2:-3]
+            company = " - ".join([cp.replace('[[', '').replace(']]', '').strip() for cp in company_parts])
+            company = company.replace('\\\\', '\\').replace('\\', '').strip()
+            
             if company:
                 companies_count[company] = companies_count.get(company, 0) + 1
                 
-            date_str = parts[4]
+            date_str = parts[-2]
             match = re.search(r'\b(19\d\d|20\d\d)\b', date_str)
             if match:
                 year = match.group(1)
@@ -641,6 +679,351 @@ An overview of your LinkedIn profile and activity metrics.
     print("Success! Created statistics.md inside vault.")
 
 # ============================================================================
+# CRM & Company Directories Generation
+# ============================================================================
+
+def parse_messages_by_partner(messages_file):
+    """Group all messages chronologically by conversation partner."""
+    partner_messages = {}
+    if not os.path.exists(messages_file):
+        return partner_messages
+        
+    with open(messages_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+        
+    blocks = content.split('\n---')
+    for block in blocks:
+        block = block.strip()
+        if not block:
+            continue
+            
+        date_match = re.search(r'^##\s+(.*?)$', block, re.MULTILINE)
+        date_str = date_match.group(1).strip() if date_match else ""
+        
+        header_match = re.search(r"\*\*From:\*\* (.*?) → \*\*To:\*\* (.*)", block)
+        if not header_match:
+            continue
+            
+        from_raw = header_match.group(1).strip()
+        to_raw = header_match.group(2).strip()
+        
+        from_name = from_raw.replace('[[', '').replace(']]', '').strip()
+        to_name = to_raw.replace('[[', '').replace(']]', '').strip()
+        
+        body = ""
+        header_span = header_match.span()
+        body_part = block[header_span[1]:].strip()
+        if body_part:
+            body = body_part
+            
+        is_sent = "dima vishnevetsky" in from_name.lower() or "dima" == from_name.lower()
+        if is_sent:
+            partner = to_name
+        else:
+            partner = from_name
+            
+        if partner:
+            if partner not in partner_messages:
+                partner_messages[partner] = []
+            partner_messages[partner].append({
+                "date": date_str,
+                "from": from_raw,
+                "to": to_raw,
+                "body": body
+            })
+            
+    # Reverse to restore chronological order
+    for partner in partner_messages:
+        partner_messages[partner].reverse()
+        
+    return partner_messages
+
+def parse_connections_directory(connections_file):
+    """Build employee and connection data lookups, resolving potential column shift from literal pipes."""
+    people_details = {}
+    company_employees = {}
+    
+    if not os.path.exists(connections_file):
+        return people_details, company_employees
+        
+    with open(connections_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.startswith('|'):
+                continue
+            parts = [p.strip() for p in line.split('|')]
+            if len(parts) < 5:
+                continue
+            name = parts[1]
+            if name.lower() in ('name', '') or name.startswith('---'):
+                continue
+                
+            clean_name = name.replace('[[', '').replace(']]', '').strip()
+            connected_date = parts[-2].replace('[[', '').replace(']]', '').strip()
+            position = parts[-3].replace('[[', '').replace(']]', '').strip()
+            
+            # Reconstruct company name safely
+            company_parts = parts[2:-3]
+            company = " - ".join([cp.replace('[[', '').replace(']]', '').strip() for cp in company_parts])
+            company = company.replace('\\\\', '\\').replace('\\', '').strip()
+            
+            people_details[clean_name] = {
+                "name": clean_name,
+                "company": company,
+                "position": position,
+                "connected_date": connected_date
+            }
+            
+            if company:
+                if company not in company_employees:
+                    company_employees[company] = []
+                company_employees[company].append({
+                    "name": clean_name,
+                    "position": position
+                })
+                
+    return people_details, company_employees
+
+def parse_recommendations_by_person(recs_file, recs_given_file):
+    """Parse recommendations file to group entries by person name."""
+    recs_by_person = {}
+    
+    def parse_file(filepath, is_received):
+        if not os.path.exists(filepath):
+            return
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        blocks = content.split('\n---')
+        for block in blocks:
+            block = block.strip()
+            if not block:
+                continue
+            prefix = "From" if is_received else "To"
+            match = re.search(rf"^## {prefix}\s+\[\[(.*?)\]\]", block, re.MULTILINE)
+            if not match:
+                continue
+            name = match.group(1).strip()
+            
+            lines = block.split('\n')
+            relationship = ""
+            for line in lines:
+                if line.startswith('**') and ' at ' in line:
+                    relationship = line.strip()
+                    break
+                    
+            body_match = re.search(r"^>\s+(.*?)$", block, re.MULTILINE | re.DOTALL)
+            body = body_match.group(1).strip() if body_match else ""
+            
+            if name not in recs_by_person:
+                recs_by_person[name] = []
+            recs_by_person[name].append({
+                "type": "Received" if is_received else "Given",
+                "relationship": relationship,
+                "text": body
+            })
+            
+    parse_file(recs_file, True)
+    parse_file(recs_given_file, False)
+    return recs_by_person
+
+def parse_comments_by_person(comments_file):
+    """Extract comment history and group by commenter name."""
+    comments_by_person = {}
+    if not os.path.exists(comments_file):
+        return comments_by_person
+        
+    with open(comments_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+        
+    pattern = re.compile(
+        r"\*\*(.*?)\*\*\s*\n>\s*\[\[(.*?)\]\](.*)\n(?:\[View\]\((.*?)\))?",
+        re.MULTILINE
+    )
+    matches = pattern.findall(content)
+    for match in matches:
+        date = match[0].strip()
+        name = match[1].strip()
+        text = match[2].strip()
+        url = match[3].strip() if len(match) > 3 else ""
+        
+        if name not in comments_by_person:
+            comments_by_person[name] = []
+        comments_by_person[name].append({
+            "date": date,
+            "text": text,
+            "url": url
+        })
+    return comments_by_person
+
+def generate_people_pages(output_dir, people_details, partner_messages, recs_by_person, comments_by_person):
+    """Create CRM-style individual profile notes inside people/."""
+    people_dir = Path(output_dir) / "people"
+    if people_dir.exists():
+        shutil.rmtree(people_dir)
+    people_dir.mkdir(parents=True, exist_ok=True)
+    
+    active_people = set(partner_messages.keys()) | set(recs_by_person.keys()) | set(comments_by_person.keys())
+    active_people.discard("Dima Vishnevetsky")
+    active_people.discard("Dima")
+    
+    print(f"Generating {len(active_people)} individual connection pages in people/...")
+    
+    for name in active_people:
+        details = people_details.get(name, {
+            "name": name,
+            "company": "Unknown",
+            "position": "Unknown",
+            "connected_date": "Unknown"
+        })
+        
+        content = f"""#linkedin/people
+
+# {name}
+
+## 🏢 Profile
+* **Current Position:** {details['position']}
+* **Company:** [[{details['company']}]]
+* **Connected Date:** {details['connected_date']}
+"""
+
+        if name in recs_by_person:
+            content += "\n## ⭐️ Recommendations\n"
+            for rec in recs_by_person[name]:
+                content += f"\n### {rec['type']}\n* **Relationship:** {rec['relationship']}\n\n> {rec['text']}\n"
+                
+        if name in partner_messages:
+            content += "\n## 💬 Conversation History\n"
+            for msg in partner_messages[name]:
+                content += f"\n### {msg['date']}\n**From:** {msg['from']} → **To:** {msg['to']}\n\n{msg['body']}\n"
+                
+        if name in comments_by_person:
+            content += "\n## 📝 Comments\n"
+            for comm in comments_by_person[name]:
+                content += f"\n* {comm['date']}: {comm['text']} [View Original]({comm['url']})\n"
+
+        safe_name = re.sub(r'[\\/*?:"<>|]', "", name)
+        filepath = people_dir / f"{safe_name}.md"
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+def parse_job_applications_by_company(job_applications_file):
+    """Group job applications by target company."""
+    apps_by_company = {}
+    if not os.path.exists(job_applications_file):
+        return apps_by_company
+    with open(job_applications_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.startswith('|'):
+                continue
+            parts = [p.strip() for p in line.split('|')]
+            if len(parts) < 5:
+                continue
+            date = parts[1]
+            company = parts[2].replace('[[', '').replace(']]', '').strip()
+            position = parts[3].strip()
+            status = parts[4].strip()
+            
+            if date.lower() in ('date', '') or date.startswith('---'):
+                continue
+                
+            if company:
+                if company not in apps_by_company:
+                    apps_by_company[company] = []
+                apps_by_company[company].append({
+                    "date": date,
+                    "position": position,
+                    "status": status
+                })
+    return apps_by_company
+
+def parse_experience_by_company(experience_file):
+    """Group your own work experiences by company name."""
+    exp_by_company = {}
+    if not os.path.exists(experience_file):
+        return exp_by_company
+        
+    with open(experience_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+        
+    blocks = content.split('\n---')
+    for block in blocks:
+        block = block.strip()
+        if not block:
+            continue
+        match = re.search(r'^##\s+\[\[(.*?)\]\]', block, re.MULTILINE)
+        if not match:
+            match = re.search(r'^##\s+(.*?)$', block, re.MULTILINE)
+            if not match:
+                continue
+        company = match.group(1).replace('[[', '').replace(']]', '').strip()
+        if company:
+            exp_by_company[company] = block
+            
+    return exp_by_company
+
+def load_followed_companies(companies_followed_file):
+    """Load followed companies list."""
+    followed = set()
+    if not os.path.exists(companies_followed_file):
+        return followed
+    with open(companies_followed_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if line.startswith('- '):
+                comp = line[2:].replace('[[', '').replace(']]', '').strip()
+                if comp:
+                    followed.add(comp)
+    return followed
+
+def generate_company_pages(output_dir, company_employees, followed_companies, apps_by_company, exp_by_company):
+    """Create directory note hubs for companies inside companies/."""
+    companies_dir = Path(output_dir) / "companies"
+    if companies_dir.exists():
+        shutil.rmtree(companies_dir)
+    companies_dir.mkdir(parents=True, exist_ok=True)
+    
+    all_companies = (
+        set(company_employees.keys()) | 
+        set(followed_companies) | 
+        set(apps_by_company.keys()) | 
+        set(exp_by_company.keys())
+    )
+    
+    print(f"Generating {len(all_companies)} company pages in companies/...")
+    
+    for company in all_companies:
+        if not company or company.lower() == 'unknown':
+            continue
+            
+        is_followed = company in followed_companies
+        
+        content = f"""#linkedin/company
+
+# {company}
+
+## 🏢 Status
+* **Followed on LinkedIn:** {"Yes" if is_followed else "No"}
+"""
+
+        if company in exp_by_company:
+            content += f"\n## 💼 Your Work History\n\n{exp_by_company[company]}\n"
+            
+        if company in apps_by_company:
+            content += "\n## 📄 Your Job Applications\n\n| Date | Position | Status |\n|------|----------|--------|\n"
+            for app in apps_by_company[company]:
+                content += f"| {app['date']} | {app['position']} | {app['status']} |\n"
+                
+        connections = company_employees.get(company, [])
+        if connections:
+            content += f"\n## 👥 Connections working here ({len(connections)})\n\n"
+            for conn in connections:
+                content += f"* [[{conn['name']}]] - {conn['position']}\n"
+                
+        safe_company = re.sub(r'[\\/*?:"<>|]', "", company)
+        filepath = companies_dir / f"{safe_company}.md"
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+# ============================================================================
 # Main Orchestrator
 # ============================================================================
 
@@ -737,14 +1120,13 @@ def main():
         enrich_file_with_skills(experience_file, sorted_skills)
         enrich_file_with_skills(projects_file, sorted_skills)
 
-    # Step 4: Company & School Clusters
+    # Step 4: Company & School Clusters (Stage 1: Link in raw logs)
     entities = extract_entities(experience_file, education_file, companies_followed_file)
     if entities:
         print(f"Loaded {len(entities)} company/school entities. Clustering files...")
         enrich_headers(experience_file, entities)
         enrich_headers(education_file, entities)
         enrich_companies_followed(companies_followed_file, entities)
-        enrich_table_company_column(connections_file)
         enrich_table_company_column(job_applications_file)
         enrich_recommendations_companies(recs_file)
         enrich_recommendations_companies(recs_given_file)
@@ -755,7 +1137,23 @@ def main():
         print(f"Mapped {len(post_id_to_header)} post IDs. Linking comments to posts...")
         enrich_comments_with_posts(comments_file, post_id_to_header)
 
-    # Step 6: Generate Dashboard Report
+    # Step 6: Generate CRM directories (people/ and companies/)
+    partner_messages = parse_messages_by_partner(messages_file)
+    people_details, company_employees = parse_connections_directory(connections_file)
+    recs_by_person = parse_recommendations_by_person(recs_file, recs_given_file)
+    comments_by_person = parse_comments_by_person(comments_file)
+    followed_companies = load_followed_companies(companies_followed_file)
+    apps_by_company = parse_job_applications_by_company(job_applications_file)
+    exp_by_company = parse_experience_by_company(experience_file)
+
+    # Generate individual directories
+    generate_people_pages(output_dir, people_details, partner_messages, recs_by_person, comments_by_person)
+    generate_company_pages(output_dir, company_employees, followed_companies, apps_by_company, exp_by_company)
+
+    # Step 7: Final table enrichments (enrich both Name and Company columns in connections.md)
+    enrich_connections_table(connections_file)
+
+    # Step 8: Generate Dashboard Report
     generate_statistics(output_dir)
 
     print(f"\nSuccess! Enriched vault is ready at: {output_dir}")
