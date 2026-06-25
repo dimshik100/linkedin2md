@@ -180,6 +180,7 @@ By default, LinkedIn's data export results in separate, unconnected markdown fil
 *   **Company & Institution Clusters (`experience.md`, `education.md`, `companies_followed.md`, `connections.md`, `job_applications.md`)**: Links all your past employers, schools, followed companies, and connection employers to cluster your graph by organization.
 *   **Comment-to-Post Linking (`comments.md` ➔ `posts.md`)**: Identifies comment URN IDs and links your comments back to the exact shared post header they belong to: `(on [[posts#PostHeader|Post]])`.
 *   **Category Tagging:** Prepends tags (e.g. `#linkedin/career`, `#linkedin/network`, `#linkedin/activity`) to the top of each file for easy filtering.
+*   **Profile Statistics Dashboard (`statistics.md`)**: Automatically generates a dashboard report summarizing key metrics, connection growth timeline, top companies in your network, top messaging partners, and reaction breakdowns.
 
 ### Usage
 
