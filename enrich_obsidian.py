@@ -409,6 +409,238 @@ def enrich_comments_with_posts(comments_file, post_id_to_header):
         f.writelines(new_lines)
 
 # ============================================================================
+# Statistics Report Generation
+# ============================================================================
+
+def parse_connections_stats(connections_file):
+    total_connections = 0
+    connections_by_year = {}
+    companies_count = {}
+    
+    if not os.path.exists(connections_file):
+        return total_connections, connections_by_year, companies_count
+
+    with open(connections_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.startswith('|'):
+                continue
+            parts = [p.strip() for p in line.split('|')]
+            if len(parts) < 5:
+                continue
+            name = parts[1]
+            if name.lower() in ('name', '') or name.startswith('---'):
+                continue
+            
+            total_connections += 1
+            
+            company = parts[2].replace('[[', '').replace(']]', '').strip()
+            if company:
+                companies_count[company] = companies_count.get(company, 0) + 1
+                
+            date_str = parts[4]
+            match = re.search(r'\b(19\d\d|20\d\d)\b', date_str)
+            if match:
+                year = match.group(1)
+                connections_by_year[year] = connections_by_year.get(year, 0) + 1
+                
+    return total_connections, connections_by_year, companies_count
+
+def parse_messages_stats(messages_file):
+    total_messages = 0
+    sent_messages = 0
+    received_messages = 0
+    chat_partners = {}
+    
+    if not os.path.exists(messages_file):
+        return total_messages, sent_messages, received_messages, chat_partners
+        
+    with open(messages_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+        
+    pattern = re.compile(r"\*\*From:\*\* (.*?) → \*\*To:\*\* (.*)")
+    matches = pattern.findall(content)
+    
+    for match in matches:
+        from_name = match[0].replace('[[', '').replace(']]', '').strip()
+        to_name = match[1].replace('[[', '').replace(']]', '').strip()
+        
+        total_messages += 1
+        
+        is_sent = "dima vishnevetsky" in from_name.lower() or "dima" == from_name.lower()
+        if is_sent:
+            sent_messages += 1
+            partner = to_name
+        else:
+            received_messages += 1
+            partner = from_name
+            
+        if partner:
+            chat_partners[partner] = chat_partners.get(partner, 0) + 1
+            
+    return total_messages, sent_messages, received_messages, chat_partners
+
+def count_posts(posts_file):
+    if not os.path.exists(posts_file):
+        return 0
+    with open(posts_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    headers = re.findall(r'^##\s+(.*?)$', content, re.MULTILINE)
+    return len(headers)
+
+def count_comments(comments_file):
+    if not os.path.exists(comments_file):
+        return 0
+    count = 0
+    with open(comments_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if line.startswith('> '):
+                count += 1
+    return count
+
+def parse_reactions_stats(reactions_file):
+    total_reactions = 0
+    types = {}
+    if not os.path.exists(reactions_file):
+        return total_reactions, types
+    with open(reactions_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.startswith('|'):
+                continue
+            parts = [p.strip() for p in line.split('|')]
+            if len(parts) < 4:
+                continue
+            rtype = parts[2]
+            if rtype.lower() in ('type', '') or rtype.startswith('---'):
+                continue
+            total_reactions += 1
+            types[rtype] = types.get(rtype, 0) + 1
+    return total_reactions, types
+
+def count_recs_received(recs_file):
+    if not os.path.exists(recs_file):
+        return 0
+    with open(recs_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    return len(re.findall(r'^## From', content, re.MULTILINE))
+
+def count_recs_given(recs_given_file):
+    if not os.path.exists(recs_given_file):
+        return 0
+    with open(recs_given_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    return len(re.findall(r'^## To', content, re.MULTILINE))
+
+def count_job_applications(job_applications_file):
+    if not os.path.exists(job_applications_file):
+        return 0
+    count = 0
+    with open(job_applications_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.startswith('|'):
+                continue
+            parts = [p.strip() for p in line.split('|')]
+            if len(parts) < 5:
+                continue
+            date = parts[1]
+            if date.lower() in ('date', '') or date.startswith('---'):
+                continue
+            count += 1
+    return count
+
+def generate_statistics(vault_dir):
+    """Scan all files inside vault_dir and generate a markdown dashboard report."""
+    print("Generating profile statistics dashboard...")
+    vault_path = Path(vault_dir)
+    
+    connections_file = vault_path / "connections.md"
+    messages_file = vault_path / "messages.md"
+    posts_file = vault_path / "posts.md"
+    comments_file = vault_path / "comments.md"
+    reactions_file = vault_path / "reactions.md"
+    recs_file = vault_path / "recommendations.md"
+    recs_given_file = vault_path / "recommendations_given.md"
+    job_applications_file = vault_path / "job_applications.md"
+    
+    total_connections, connections_by_year, companies_count = parse_connections_stats(connections_file)
+    total_messages, sent_messages, received_messages, chat_partners = parse_messages_stats(messages_file)
+    total_posts = count_posts(posts_file)
+    total_comments = count_comments(comments_file)
+    total_reactions, reaction_types = parse_reactions_stats(reactions_file)
+    recs_received = count_recs_received(recs_file)
+    recs_given = count_recs_given(recs_given_file)
+    total_jobs = count_job_applications(job_applications_file)
+    
+    # Growth Table
+    growth_table = "| Year | New Connections |\n|------|-----------------|\n"
+    for year in sorted(connections_by_year.keys(), reverse=True):
+        growth_table += f"| {year} | {connections_by_year[year]} |\n"
+        
+    # Top Companies
+    top_companies = sorted(companies_count.items(), key=lambda x: x[1], reverse=True)[:10]
+    companies_table = "| Company | Connections |\n|---------|-------------|\n"
+    for company, count in top_companies:
+        companies_table += f"| [[{company}]] | {count} |\n"
+        
+    # Top Messaging Partners
+    top_partners = sorted(chat_partners.items(), key=lambda x: x[1], reverse=True)[:10]
+    partners_table = "| Name | Messages Exchanged |\n|------|--------------------|\n"
+    for name, count in top_partners:
+        partners_table += f"| [[{name}]] | {count} |\n"
+        
+    # Reaction Types
+    reaction_table = "| Reaction Type | Count |\n|---------------|-------|\n"
+    for rtype, count in sorted(reaction_types.items(), key=lambda x: x[1], reverse=True):
+        reaction_table += f"| {rtype} | {count} |\n"
+        
+    stats_md = f"""#linkedin/statistics
+
+# Profile Statistics & Dashboard
+
+An overview of your LinkedIn profile and activity metrics.
+
+## 📊 Summary Metrics
+
+| Metric | Count | Details |
+|--------|-------|---------|
+| **Total Connections** | {total_connections} | 1st-degree professional network |
+| **Messages Exchanged** | {total_messages} | {sent_messages} sent / {received_messages} received |
+| **Posts Shared** | {total_posts} | Content shared by you |
+| **Comments Made** | {total_comments} | Comments left on posts |
+| **Reactions Given** | {total_reactions} | Likes/empathies/praise on content |
+| **Recommendations** | {recs_received + recs_given} | {recs_received} received / {recs_given} given |
+| **Job Applications** | {total_jobs} | Applications submitted via LinkedIn |
+
+---
+
+## 📈 Connection Growth by Year
+
+{growth_table}
+
+---
+
+## 🏢 Top Companies in Network
+
+{companies_table}
+
+---
+
+## 💬 Top Messaging Partners
+
+{partners_table}
+
+---
+
+## ❤️ Reactions Given Breakdown
+
+{reaction_table}
+"""
+
+    statistics_file = vault_path / "statistics.md"
+    with open(statistics_file, 'w', encoding='utf-8') as f:
+        f.write(stats_md)
+    print("Success! Created statistics.md inside vault.")
+
+# ============================================================================
 # Main Orchestrator
 # ============================================================================
 
@@ -501,7 +733,6 @@ def main():
     skills = load_skills(skills_file)
     if skills:
         print(f"Loaded {len(skills)} skills. Resolving skill mentions in experience.md & projects.md...")
-        # Sort skills by length descending to prevent substring issues
         sorted_skills = sorted(skills, key=len, reverse=True)
         enrich_file_with_skills(experience_file, sorted_skills)
         enrich_file_with_skills(projects_file, sorted_skills)
@@ -510,15 +741,11 @@ def main():
     entities = extract_entities(experience_file, education_file, companies_followed_file)
     if entities:
         print(f"Loaded {len(entities)} company/school entities. Clustering files...")
-        # Enrich headers
         enrich_headers(experience_file, entities)
         enrich_headers(education_file, entities)
-        # Enrich list items
         enrich_companies_followed(companies_followed_file, entities)
-        # Enrich tables (Company column)
         enrich_table_company_column(connections_file)
         enrich_table_company_column(job_applications_file)
-        # Enrich recommendations company metadata
         enrich_recommendations_companies(recs_file)
         enrich_recommendations_companies(recs_given_file)
 
@@ -527,6 +754,9 @@ def main():
     if post_id_to_header:
         print(f"Mapped {len(post_id_to_header)} post IDs. Linking comments to posts...")
         enrich_comments_with_posts(comments_file, post_id_to_header)
+
+    # Step 6: Generate Dashboard Report
+    generate_statistics(output_dir)
 
     print(f"\nSuccess! Enriched vault is ready at: {output_dir}")
 
