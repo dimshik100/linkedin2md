@@ -585,6 +585,260 @@ def count_job_applications(job_applications_file):
             count += 1
     return count
 
+def parse_network_demographics(connections_file):
+    """Categorize connections into professional roles based on job title."""
+    categories = {
+        "Software Development": [],
+        "HR & Recruitment": [],
+        "Management & Leadership": [],
+        "Founders & Executives": [],
+        "Product & Design": [],
+        "Marketing & Sales": [],
+        "Consulting & Analysis": [],
+        "Other Professionals": []
+    }
+    
+    if not os.path.exists(connections_file):
+        return categories
+
+    # Keyword mappings (lowercased)
+    dev_keywords = {"developer", "engineer", "architect", "programmer", "coder", "tech", "development", "programming"}
+    hr_keywords = {"recruiter", "hr", "talent", "acquisition", "human resources", "headhunter"}
+    mgmt_keywords = {"manager", "director", "lead", "head", "vp", "president", "team leader", "management"}
+    founder_keywords = {"founder", "ceo", "co-founder", "partner", "owner", "executive", "cto", "coo", "cmo", "cfo", "founder/ceo"}
+    prod_keywords = {"product", "ux", "ui", "designer", "design", "illustrator"}
+    marketing_keywords = {"marketing", "sales", "growth", "account", "business development", "sells", "advertisement"}
+    consult_keywords = {"consultant", "analyst", "advisor", "specialist"}
+
+    with open(connections_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.startswith('|'):
+                continue
+            parts = [p.strip() for p in line.split('|')]
+            if len(parts) < 5:
+                continue
+            name = parts[1]
+            if name.lower() in ('name', '') or name.startswith('---'):
+                continue
+            
+            clean_name = name.replace('[[', '').replace(']]', '').strip()
+            position = parts[-3].replace('[[', '').replace(']]', '').strip()
+            
+            # Reconstruct company name safely
+            company_parts = parts[2:-3]
+            company = " - ".join([cp.replace('[[', '').replace(']]', '').strip() for cp in company_parts])
+            company = company.replace('\\\\', '\\').replace('\\', '').strip()
+
+            pos_lower = position.lower()
+            matched_info = {"name": clean_name, "position": position, "company": company}
+            
+            # Match categories in logical order (Founders/Execs first, then Devs, Product/Design, etc.)
+            if any(k in pos_lower for k in founder_keywords):
+                categories["Founders & Executives"].append(matched_info)
+            elif any(k in pos_lower for k in dev_keywords):
+                categories["Software Development"].append(matched_info)
+            elif any(k in pos_lower for k in prod_keywords):
+                categories["Product & Design"].append(matched_info)
+            elif any(k in pos_lower for k in mgmt_keywords):
+                categories["Management & Leadership"].append(matched_info)
+            elif any(k in pos_lower for k in hr_keywords):
+                categories["HR & Recruitment"].append(matched_info)
+            elif any(k in pos_lower for k in marketing_keywords):
+                categories["Marketing & Sales"].append(matched_info)
+            elif any(k in pos_lower for k in consult_keywords):
+                categories["Consulting & Analysis"].append(matched_info)
+            else:
+                categories["Other Professionals"].append(matched_info)
+                
+    return categories
+
+def generate_role_pages(output_dir, role_connections):
+    """Create directory note hubs for professional roles inside roles/."""
+    roles_dir = Path(output_dir) / "roles"
+    if roles_dir.exists():
+        shutil.rmtree(roles_dir)
+    roles_dir.mkdir(parents=True, exist_ok=True)
+    
+    print(f"Generating professional role hubs in roles/...")
+    
+    for role_name, connections in role_connections.items():
+        if not connections:
+            continue
+            
+        desc = ""
+        if role_name == "Software Development":
+            desc = "A directory of your connections working in Software Development, engineering, architecture, and other technical developer positions."
+        elif role_name == "HR & Recruitment":
+            desc = "A directory of your connections working in Recruitment, HR, Talent Acquisition, and Human Resources."
+        elif role_name == "Management & Leadership":
+            desc = "A directory of your connections working in Management, Team Leadership, Directorship, and Vice President positions."
+        elif role_name == "Founders & Executives":
+            desc = "A directory of your connections who are Founders, CEOs, Partners, Owners, or C-level Executives."
+        elif role_name == "Product & Design":
+            desc = "A directory of your connections working in Product Management, Product Owners, UX/UI Design, and Graphic Design."
+        elif role_name == "Marketing & Sales":
+            desc = "A directory of your connections working in Marketing, Sales, Growth, Business Development, and Account Management."
+        elif role_name == "Consulting & Analysis":
+            desc = "A directory of your connections working in Consulting, Business Analysis, or specialized Advisory roles."
+        else:
+            desc = "A directory of your connections in other professional positions."
+
+        content = f"""#linkedin/role
+
+# {role_name}
+
+{desc}
+
+## 👥 Connections ({len(connections)})
+
+"""
+        for conn in sorted(connections, key=lambda x: x["name"]):
+            comp_link = f" [[{conn['company']}]]" if conn['company'] else ""
+            content += f"* [[{conn['name']}]] - {conn['position']}{' at' if comp_link else ''}{comp_link}\n"
+            
+        safe_role_name = re.sub(r'[\\/*?:"<>|]', "", role_name)
+        filepath = roles_dir / f"{safe_role_name}.md"
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+def parse_endorsements_stats(endorsements_file):
+    """Count skill endorsements and find top skills and top endorsers."""
+    skill_counts = {}
+    endorser_counts = {}
+    
+    if not os.path.exists(endorsements_file):
+        return [], []
+        
+    with open(endorsements_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.startswith('|'):
+                continue
+            parts = [p.strip() for p in line.split('|')]
+            if len(parts) < 4:
+                continue
+            skill = parts[1]
+            endorser = parts[2]
+            
+            if skill.lower() in ('skill', '') or skill.startswith('---'):
+                continue
+                
+            skill_counts[skill] = skill_counts.get(skill, 0) + 1
+            if endorser and endorser.lower() != 'endorsed by':
+                clean_endorser = endorser.replace('[[', '').replace(']]', '').strip()
+                endorser_counts[clean_endorser] = endorser_counts.get(clean_endorser, 0) + 1
+                
+    top_skills = sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    top_endorsers = sorted(endorser_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    
+    return top_skills, top_endorsers
+
+def parse_invitations_stats(invitations_file):
+    """Count incoming vs outgoing invitations."""
+    outgoing = 0
+    incoming = 0
+    
+    if not os.path.exists(invitations_file):
+        return outgoing, incoming
+        
+    with open(invitations_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.startswith('|'):
+                continue
+            parts = [p.strip() for p in line.split('|')]
+            if len(parts) < 5:
+                continue
+            direction = parts[4]
+            if direction.lower() in ('direction', '') or direction.startswith('---'):
+                continue
+            if 'outgoing' in direction.lower():
+                outgoing += 1
+            elif 'incoming' in direction.lower():
+                incoming += 1
+                
+    return outgoing, incoming
+
+def parse_search_stats(search_queries_file):
+    """Find top 10 search terms."""
+    queries = {}
+    
+    if not os.path.exists(search_queries_file):
+        return []
+        
+    with open(search_queries_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.startswith('|'):
+                continue
+            parts = [p.strip() for p in line.split('|')]
+            if len(parts) < 3:
+                continue
+            query = parts[2].strip()
+            
+            if query.lower() in ('query', '') or query.startswith('---'):
+                continue
+                
+            if query:
+                queries[query.lower()] = queries.get(query.lower(), 0) + 1
+                
+    top_queries = sorted(queries.items(), key=lambda x: x[1], reverse=True)[:10]
+    return top_queries
+
+def parse_inferences_and_ads_stats(inferences_file, ad_targeting_file):
+    """Extract key inferences and advertiser targeting counts."""
+    inferences = []
+    targeting_counts = {
+        "groups": 0,
+        "companies": 0,
+        "interests": 0,
+        "industries": 0,
+        "traits": 0
+    }
+    
+    # 1. Parse Inferences
+    if os.path.exists(inferences_file):
+        with open(inferences_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if not line.startswith('|'):
+                    continue
+                parts = [p.strip() for p in line.split('|')]
+                if len(parts) < 5:
+                    continue
+                category = parts[1]
+                itype = parts[2]
+                inf_val = parts[4]
+                
+                if category.lower() in ('category', '') or category.startswith('---'):
+                    continue
+                
+                inferences.append({
+                    "category": category,
+                    "type": itype,
+                    "inference": inf_val
+                })
+                
+    # 2. Parse Ad Targeting
+    if os.path.exists(ad_targeting_file):
+        with open(ad_targeting_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Parse fields: **Label:** values (separated by ;)
+        patterns = {
+            "groups": r"\*\*Member Groups:\*\*\s*(.*?)$",
+            "companies": r"\*\*Company Follower Of:\*\*\s*(.*?)$",
+            "interests": r"\*\*Member Interests:\*\*\s*(.*?)$",
+            "industries": r"\*\*Company Industries:\*\*\s*(.*?)$",
+            "traits": r"\*\*Member Traits:\*\*\s*(.*?)$"
+        }
+        
+        for key, pat in patterns.items():
+            match = re.search(pat, content, re.MULTILINE)
+            if match:
+                items_str = match.group(1).strip()
+                if items_str:
+                    items = [i.strip() for i in items_str.split(';') if i.strip()]
+                    targeting_counts[key] = len(items)
+                    
+    return inferences, targeting_counts
+
 def generate_statistics(vault_dir):
     """Scan all files inside vault_dir and generate a markdown dashboard report."""
     print("Generating profile statistics dashboard...")
@@ -598,6 +852,11 @@ def generate_statistics(vault_dir):
     recs_file = vault_path / "recommendations.md"
     recs_given_file = vault_path / "recommendations_given.md"
     job_applications_file = vault_path / "job_applications.md"
+    endorsements_file = vault_path / "endorsements.md"
+    invitations_file = vault_path / "invitations.md"
+    search_queries_file = vault_path / "search_queries.md"
+    inferences_file = vault_path / "inferences.md"
+    ad_targeting_file = vault_path / "ad_targeting.md"
     
     total_connections, connections_by_year, companies_count = parse_connections_stats(connections_file)
     total_messages, sent_messages, received_messages, chat_partners = parse_messages_stats(messages_file)
@@ -607,6 +866,45 @@ def generate_statistics(vault_dir):
     recs_received = count_recs_received(recs_file)
     recs_given = count_recs_given(recs_given_file)
     total_jobs = count_job_applications(job_applications_file)
+    
+    # 1. Demographic categories
+    role_connections = parse_network_demographics(connections_file)
+    demographics_table = "| Category | Connections | Directory |\n|----------|-------------|-----------|\n"
+    for role, conn_list in sorted(role_connections.items(), key=lambda x: len(x[1]), reverse=True):
+        demographics_table += f"| {role} | {len(conn_list)} | [[{role}]] |\n"
+        
+    # 2. Endorsements & Skills
+    top_skills, top_endorsers = parse_endorsements_stats(endorsements_file)
+    skills_table = "| Skill | Endorsements |\n|-------|--------------|\n"
+    for skill, count in top_skills:
+        skills_table += f"| {skill} | {count} |\n"
+        
+    endorsers_table = "| Name | Endorsements Given |\n|------|--------------------|\n"
+    for endorser, count in top_endorsers:
+        endorsers_table += f"| [[{endorser}]] | {count} |\n"
+        
+    # 3. Invitations
+    outgoing_invites, incoming_invites = parse_invitations_stats(invitations_file)
+    invitations_summary = f"* **Sent Invitations:** {outgoing_invites}\n* **Received Invitations:** {incoming_invites}\n* **Total Invitations Processed:** {outgoing_invites + incoming_invites}"
+    
+    # 4. Search terms
+    top_queries = parse_search_stats(search_queries_file)
+    search_table = "| Search Term | Frequency |\n|-------------|-----------|\n"
+    for query, count in top_queries:
+        search_table += f"| {query} | {count} |\n"
+        
+    # 5. Inferences and Ads
+    inferences, targeting_counts = parse_inferences_and_ads_stats(inferences_file, ad_targeting_file)
+    inferences_table = "| Category | Detail Type | Inference Value |\n|----------|-------------|-----------------|\n"
+    for inf in inferences:
+        inferences_table += f"| {inf['category']} | {inf['type']} | `{inf['inference']}` |\n"
+        
+    privacy_targeting_table = "| Targeting Criteria | Count | Description |\n|--------------------|-------|-------------|\n"
+    privacy_targeting_table += f"| **Followed Companies** | {targeting_counts['companies']} | Companies you follow used for ad targeting |\n"
+    privacy_targeting_table += f"| **Member Interests** | {targeting_counts['interests']} | Inferred interests used for ad targeting |\n"
+    privacy_targeting_table += f"| **Member Groups** | {targeting_counts['groups']} | LinkedIn groups you belong to used for ad targeting |\n"
+    privacy_targeting_table += f"| **Company Industries** | {targeting_counts['industries']} | Industries of companies you target/follow |\n"
+    privacy_targeting_table += f"| **Member Traits** | {targeting_counts['traits']} | Profile traits inferred by LinkedIn |\n"
     
     # Growth Table
     growth_table = "| Year | New Connections |\n|------|-----------------|\n"
@@ -656,6 +954,12 @@ An overview of your LinkedIn profile and activity metrics.
 
 ---
 
+## 💼 Network Professional Breakdown
+
+{demographics_table}
+
+---
+
 ## 🏢 Top Companies in Network
 
 {companies_table}
@@ -668,9 +972,41 @@ An overview of your LinkedIn profile and activity metrics.
 
 ---
 
+## 🏆 Skills & Endorsements Analytics
+
+### Top Endorsed Skills
+{skills_table}
+
+### Top Endorsers
+{endorsers_table}
+
+---
+
+## ✉️ Connection Invitations Summary
+
+{invitations_summary}
+
+---
+
+## 🔍 Top Search Queries
+
+{search_table}
+
+---
+
 ## ❤️ Reactions Given Breakdown
 
 {reaction_table}
+
+---
+
+## 🕵️‍♂️ LinkedIn Inferences & Ad Profile
+
+### LinkedIn's Inferences About You
+{inferences_table}
+
+### Advertiser Targeting Profile
+{privacy_targeting_table}
 """
 
     statistics_file = vault_path / "statistics.md"
@@ -1149,6 +1485,10 @@ def main():
     # Generate individual directories
     generate_people_pages(output_dir, people_details, partner_messages, recs_by_person, comments_by_person)
     generate_company_pages(output_dir, company_employees, followed_companies, apps_by_company, exp_by_company)
+
+    # Generate professional role directory
+    role_connections = parse_network_demographics(connections_file)
+    generate_role_pages(output_dir, role_connections)
 
     # Step 7: Final table enrichments (enrich both Name and Company columns in connections.md)
     enrich_connections_table(connections_file)
