@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Optional PDF generation from generated profile markdown.
 
 SOLID principles compliance:
@@ -14,17 +15,13 @@ logger = logging.getLogger(__name__)
 def convert_md_to_pdf(markdown_content: str, pdf_path: Path) -> bool:
     """Convert generated profile markdown into an elegant, styled A4 print-ready PDF.
 
-    This feature is optional and requires 'markdown' and 'weasyprint' packages.
-    If not installed, it falls back to showing a descriptive error message.
+    This feature is optional and requires 'markdown' package.
+    If 'weasyprint' is missing, it falls back to Google Chrome headless printing.
     """
     try:
         import markdown  # type: ignore
-        from weasyprint import HTML  # type: ignore
     except ImportError:
-        logger.error(
-            "PDF generation requires the 'weasyprint' and 'markdown' packages. "
-            "Please install them using: pip install weasyprint markdown"
-        )
+        logger.error("PDF generation requires the 'markdown' package.")
         return False
 
     try:
@@ -132,8 +129,39 @@ def convert_md_to_pdf(markdown_content: str, pdf_path: Path) -> bool:
 </body>
 </html>
 """
-        HTML(string=styled_html).write_pdf(str(pdf_path))
-        return True
+        # Try using WeasyPrint first
+        try:
+            from weasyprint import HTML  # type: ignore
+            HTML(string=styled_html).write_pdf(str(pdf_path))
+            return True
+        except Exception as wp_error:
+            logger.info("WeasyPrint not available or failed: %s. Trying Google Chrome fallback...", wp_error)
+
+        # Fallback to Google Chrome headless printing
+        import subprocess
+        chrome_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+        if Path(chrome_path).exists():
+            temp_html_path = pdf_path.with_suffix(".html")
+            temp_html_path.write_text(styled_html, encoding="utf-8")
+            try:
+                subprocess.run([
+                    chrome_path,
+                    "--headless",
+                    "--disable-gpu",
+                    f"--print-to-pdf={pdf_path}",
+                    str(temp_html_path)
+                ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                if temp_html_path.exists():
+                    temp_html_path.unlink()
+                return True
+            except Exception as chrome_error:
+                logger.error("Chrome PDF generation failed: %s", chrome_error)
+                if temp_html_path.exists():
+                    temp_html_path.unlink()
+        else:
+            logger.error("Google Chrome not found at %s", chrome_path)
+
+        return False
     except Exception as e:
         logger.error("Failed to generate PDF: %s", e)
         return False

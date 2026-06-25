@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Network section parsers (connections, follows, invitations).
 
 Each parser handles ONE section (SRP).

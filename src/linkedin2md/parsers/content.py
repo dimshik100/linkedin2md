@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Content section parsers (posts, comments, reactions, etc.).
 
 Each parser handles ONE section (SRP).

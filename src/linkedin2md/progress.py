@@ -1,3 +1,4 @@
+from __future__ import annotations
 """CLI progress indicators using only the standard library."""
 
 import sys

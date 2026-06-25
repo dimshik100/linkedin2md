@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Profile extension section formatters.
 
 Formatters for additional profile data: causes, interests, courses,

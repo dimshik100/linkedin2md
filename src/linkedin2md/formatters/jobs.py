@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Job-related section formatters.
 
 Each formatter handles ONE section (SRP).

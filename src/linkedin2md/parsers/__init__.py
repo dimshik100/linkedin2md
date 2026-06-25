@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Section parsers package.
 
 Each parser handles ONE section (Single Responsibility Principle).

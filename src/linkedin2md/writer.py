@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Output writer implementations.
 
 Single Responsibility: Write formatted content to files.

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Job-related section parsers.
 
 Each parser handles ONE section (SRP).

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Profile extension section parsers.
 
 Parsers for additional profile data categories: causes, interests,

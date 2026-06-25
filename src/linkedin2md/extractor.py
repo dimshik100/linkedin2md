@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Data extraction implementations.
 
 Single Responsibility: Extract raw data from sources.

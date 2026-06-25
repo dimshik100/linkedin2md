@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Network extension section formatters.
 
 Formatters for additional network data: groups.

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Registry implementations for Open/Closed Principle.
 
 Allows adding new parsers and formatters without modifying existing code.

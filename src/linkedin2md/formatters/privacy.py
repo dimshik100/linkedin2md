@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Privacy and account section formatters.
 
 Formatters for account/privacy data: contact settings, data export history,

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Base parser with shared utilities.
 
 Provides common parsing functionality that section parsers can use.

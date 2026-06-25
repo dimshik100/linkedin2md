@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Section formatters package.
 
 Each formatter handles ONE section (Single Responsibility Principle).

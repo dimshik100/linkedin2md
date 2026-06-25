@@ -1,3 +1,4 @@
+from __future__ import annotations
 """CLI for linkedin2md.
 
 Dependency Inversion: Uses factory function, doesn't create dependencies directly.

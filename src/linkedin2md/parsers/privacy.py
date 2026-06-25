@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Privacy and account section parsers.
 
 Parsers for account/privacy data: contact settings, data export history,

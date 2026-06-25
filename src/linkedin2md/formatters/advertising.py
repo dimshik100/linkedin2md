@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Advertising section formatters.
 
 Each formatter handles ONE section (SRP).

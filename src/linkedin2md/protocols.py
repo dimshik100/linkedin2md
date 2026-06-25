@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Abstract protocols (interfaces) for SOLID compliance.
 
 Defines contracts that implementations must follow:

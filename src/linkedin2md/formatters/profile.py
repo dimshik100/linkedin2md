@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Profile section formatter.
 
 Single Responsibility: Format profile data to Markdown.

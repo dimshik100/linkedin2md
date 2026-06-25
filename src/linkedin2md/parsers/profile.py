@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Profile section parsers.
 
 Each parser handles ONE piece of profile data (SRP).

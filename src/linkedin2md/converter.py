@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Main converter orchestrator with dependency injection.
 
 Implements the Dependency Inversion Principle:

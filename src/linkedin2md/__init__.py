@@ -1,3 +1,4 @@
+from __future__ import annotations
 """linkedin2md - Convert LinkedIn data exports to Markdown.
 
 SOLID-compliant architecture:

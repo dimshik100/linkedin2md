@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Recommendations and endorsements parsers.
 
 Each parser handles ONE section (SRP).

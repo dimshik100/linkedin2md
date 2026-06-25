@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Professional section parsers (skills, experience, education, etc.).
 
 Each parser handles ONE section (SRP).

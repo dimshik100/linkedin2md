@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Language detection implementations.
 
 Single Responsibility: Detect language of text.

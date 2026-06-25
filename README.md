@@ -168,6 +168,29 @@ Creates 40+ markdown files in the output directory, organized by category:
 - `verifications.md` - Identity verifications
 - `identity_assets.md` - Uploaded documents (resumes, etc.)
 
+## 🕸️ Obsidian Vault Enrichment
+
+To create a highly connected personal career knowledge base inside [Obsidian](https://obsidian.md/), you can use the enrichment script `enrich_obsidian.py` located in the root of the repository.
+
+By default, LinkedIn's data export results in separate, unconnected markdown files in the vault. This script automatically scans your vault files, extracts all of your connection names from `connections.md` (handling emojis, Hebrew, and English name variations), and enriches your files with Obsidian-style internal links `[[Link]]` and category tags:
+*   **Messages (`messages.md`)**: Automatically wraps sender and recipient names in headers like `**From:** [[Name]] → **To:** [[Name]]`.
+*   **Recommendations (`recommendations.md` & `recommendations_given.md`)**: Wraps reviewer/reviewee names in headers like `## From [[Name]]` and `## To [[Name]]`, and links employer company names (e.g. `**Role** at [[Company]]`).
+*   **Comments (`comments.md`)**: Wraps connection names tagged at the start of blockquotes, e.g. `> [[Name]] Comment text`.
+*   **Skill Hubs (`skills.md` ➔ `experience.md` & `projects.md`)**: Extracts your professional skills list and automatically links them whenever they are mentioned inside your job achievements or project descriptions.
+*   **Company & Institution Clusters (`experience.md`, `education.md`, `companies_followed.md`, `connections.md`, `job_applications.md`)**: Links all your past employers, schools, followed companies, and connection employers to cluster your graph by organization.
+*   **Comment-to-Post Linking (`comments.md` ➔ `posts.md`)**: Identifies comment URN IDs and links your comments back to the exact shared post header they belong to: `(on [[posts#PostHeader|Post]])`.
+*   **Category Tagging:** Prepends tags (e.g. `#linkedin/career`, `#linkedin/network`, `#linkedin/activity`) to the top of each file for easy filtering.
+
+### Usage
+
+1. Run the main `linkedin2md` tool first to generate your standard vault (e.g. `linkedin-vault`).
+2. Run the enrichment script to create a separate, fully-enriched copy of your vault (safely preserving your original files):
+   ```bash
+   python3 enrich_obsidian.py -i ../linkedin-vault -o ../linkedin-vault-obsidian
+   ```
+3. Open the `linkedin-vault-obsidian` folder in Obsidian.
+4. Press `Cmd + G` or `Ctrl + G` to open the **Graph View** and see the interactive web of your professional network!
+
 ## 📄 PDF Resume Generation
 
 With the `--pdf` flag, `linkedin2md` converts your parsed structured data into an elegant, print-ready, professional A4 PDF Resume (`profile.pdf`):

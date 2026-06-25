@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Recommendations and endorsements formatters.
 
 Each formatter handles ONE section (SRP).

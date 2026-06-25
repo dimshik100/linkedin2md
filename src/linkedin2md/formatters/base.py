@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Base formatter with shared utilities.
 
 Provides common formatting functionality that section formatters can use.
